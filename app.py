@@ -51,13 +51,17 @@ st.markdown("""
     .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
     .user-badge { font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
     
-    /* Existing Styles */
-    [data-testid="stSidebar"] { background-color: #f8f9fa; border-right: 1px solid #e0e0e0; }
+    /* Header & Logo Integration */
     .finance-header { background-color: #ffffff; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
+    .asset-logo-img { height: 50px; width: 50px; border-radius: 50%; object-fit: contain; margin-right: 15px; border: 1px solid #eee; background: white; vertical-align: middle; }
+    
+    /* Stats Grid */
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
     .stat-item { font-size: 14px; }
     .stat-label { color: #888; font-size: 12px; }
     .stat-value { font-weight: 600; color: #333; }
+    
+    /* News */
     .news-list-item { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; flex-direction: column; }
     .news-link { font-size: 15px; font-weight: 500; color: #1a0dab; text-decoration: none; }
     
@@ -160,15 +164,12 @@ ASSET_MAP = {
     "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X"
 }
 
-@st.cache_data(ttl=10) # Reduced TTL for fresher prices
+@st.cache_data(ttl=10)
 def get_live_price(ticker):
     try:
-        # Try fetching real-time info first
         info = yf.Ticker(ticker).info
         if 'currentPrice' in info: return info['currentPrice'], 0.0
         if 'regularMarketPrice' in info: return info['regularMarketPrice'], 0.0
-        
-        # Fallback to history
         d = yf.Ticker(ticker).history(period="1d")
         if not d.empty:
             price = d['Close'].iloc[-1]
@@ -178,19 +179,21 @@ def get_live_price(ticker):
     except: pass
     return 0.0, 0.0
 
-@st.cache_data(ttl=10) # 10s Cache for live charts
+@st.cache_data(ttl=10) # Fresh data every 10s
 def get_stock_data(ticker, interval, period, start=None, end=None):
     try:
-        # For 1d interval, extend end date to ensure today is captured
+        # Determine strict period to avoid "outdated" gaps
+        # If intraday, force 5d to ensure we capture the last trading session even on weekends
+        if interval in ['1m', '5m', '1h'] and period == '1d':
+            # For Crypto/Forex (which trade 24/7), 1d is fine.
+            # But we can default to 5d for safety across all to ensure continuity.
+            period = "5d"
+            
         if interval == "1d" and end:
             end = end + timedelta(days=1)
             data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
         else:
             data = yf.download(ticker, period=period, interval=interval, progress=False)
-        
-        # Fallback logic
-        if (data.empty or len(data)<2) and period=="1d":
-            data = yf.download(ticker, period="5d", interval=interval, progress=False)
             
         if 'Volume' in data.columns: data = data[data['Volume']>0]
         data = data.dropna()
@@ -279,6 +282,21 @@ def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
     rsi_state = "Overbought ⚠️" if rsi > 70 else "Oversold 🛒" if rsi < 30 else "Neutral ⚖️"
     report += f"**3. Technicals:** {trend} trend, RSI is {rsi_state}."
     return report
+
+@st.cache_data(ttl=600)
+def fetch_rss_feed(url):
+    try:
+        response = requests.get(url, timeout=5)
+        root = ET.fromstring(response.content)
+        items = []
+        for item in root.findall('.//item')[:10]:
+            items.append({
+                'title': item.find('title').text,
+                'link': item.find('link').text,
+                'pubDate': item.find('pubDate').text if item.find('pubDate') is not None else "Recent"
+            })
+        return items
+    except: return []
 
 # --- NAVIGATION ---
 st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
@@ -406,8 +424,8 @@ elif mode == "Asset Terminal":
 
     if ticker:
         try:
-            # FORCE FRESH DATA
-            if interval == "1d": 
+            # Force LIVE data logic
+            if interval == "1d":
                 data = get_stock_data(ticker, interval, period, start_date, end_date)
             else:
                 data = get_stock_data(ticker, interval, period)
@@ -415,7 +433,8 @@ elif mode == "Asset Terminal":
             # --- Attempt to get LIVE price from INFO ---
             try: 
                 info = yf.Ticker(ticker).info
-                live_price = info.get('currentPrice') or info.get('regularMarketPrice')
+                # Priority: Current -> Regular -> Data Close
+                live_price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('ask')
             except: 
                 info = {}; live_price = None
                 
@@ -425,19 +444,32 @@ elif mode == "Asset Terminal":
             if isinstance(data.columns, pd.MultiIndex): data.columns = data.columns.get_level_values(0)
             data = calculate_technicals(data)
             
-            # Use Live Price if available, else chart close
-            if live_price:
-                curr_p = live_price
-            else:
-                curr_p = data['Close'].iloc[-1]
+            # Fallback if chart data is available
+            if not live_price and not data.empty:
+                live_price = data['Close'].iloc[-1]
             
+            curr_p = live_price if live_price else 0.0
+            
+            # Calc change based on previous close from Chart history
             prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
             chg = curr_p - prev_p
             pct = (chg/prev_p)*100 if prev_p else 0
-            open_p = data['Open'].iloc[-1]
-            high_p = data['High'].iloc[-1]
-            low_p = data['Low'].iloc[-1]
-            vol = data['Volume'].iloc[-1] if 'Volume' in data.columns else 0
+            
+            # Extract Logo
+            logo_url = info.get('logo_url', '')
+            if not logo_url and 'website' in info and info['website']:
+                try:
+                    domain = info['website'].split('//')[-1].split('/')[0].replace('www.', '')
+                    logo_url = f"https://logo.clearbit.com/{domain}"
+                except: pass
+            
+            logo_html = f'<img src="{logo_url}" class="asset-logo-img">' if logo_url else ''
+
+            # Grid Values
+            open_p = data['Open'].iloc[-1] if not data.empty else 0
+            high_p = data['High'].iloc[-1] if not data.empty else 0
+            low_p = data['Low'].iloc[-1] if not data.empty else 0
+            vol = data['Volume'].iloc[-1] if not data.empty and 'Volume' in data.columns else 0
 
             curr_code = info.get('currency', 'USD')
             try: krw_rate = yf.Ticker("KRW=X").history(period="1d")['Close'].iloc[-1]
@@ -447,7 +479,10 @@ elif mode == "Asset Terminal":
             st.markdown(f"""
             <div class="finance-header">
                 <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                    <div><h1 style="margin:0;">{ticker}</h1><p style="margin:0;color:#666;">{market_type}</p></div>
+                    <div style="display:flex; align-items:center;">
+                        {logo_html}
+                        <div><h1 style="margin:0;">{ticker}</h1><p style="margin:0;color:#666;">{info.get('shortName', market_type)}</p></div>
+                    </div>
                     <div style="text-align:right;">
                         <h1 style="margin:0;color:{'#00C853' if chg>=0 else '#D50000'};">{curr_code} {curr_p:,.2f}</h1>
                         <p style="margin:0;font-weight:600;color:{'#00C853' if chg>=0 else '#D50000'};">{chg:+.2f} ({pct:+.2f}%) <span style="color:#888;">{price_sub}</span></p>
@@ -477,7 +512,7 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
                 
-                # Dynamic rangebreaks: Show weekends for Crypto/Forex, hide for Stocks
+                # Rangebreaks
                 rangebreaks = []
                 if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h']:
                     rangebreaks = [dict(bounds=["sat", "mon"])]
@@ -486,11 +521,22 @@ elif mode == "Asset Terminal":
                 st.plotly_chart(fig, use_container_width=True)
 
             with tabs[1]:
-                fg_score, fg_label = get_fear_and_greed_proxy()
-                pos, neg, neu, news_lbl = analyze_news_sentiment(news)
+                try:
+                    vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]
+                    fear_score = max(0, min(100, 100 - (vix - 10) * 2.5))
+                    fg_label = "Fear" if fear_score < 45 else "Greed" if fear_score > 55 else "Neutral"
+                except: fear_score=50; fg_label="Neutral"
+
+                polarities = []
+                for item in news:
+                    t = item.get('title')
+                    if t: polarities.append(TextBlob(t).sentiment.polarity)
+                avg_pol = np.mean(polarities) if polarities else 0
+                news_lbl = "Positive" if avg_pol>0.05 else "Negative" if avg_pol<-0.05 else "Neutral"
+
                 c1, c2 = st.columns([1,2])
                 with c1:
-                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fg_score, title={'text': txt("Sent")}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
+                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fear_score, title={'text': txt("Sent")}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
                     fig_g.update_layout(height=300, margin=dict(l=20,r=20,t=50,b=20))
                     st.plotly_chart(fig_g, use_container_width=True)
                 with c2:
@@ -512,7 +558,7 @@ elif mode == "Asset Terminal":
 
                 trend = "Bullish" if curr_p > data['SMA'].iloc[-1] else "Bearish"
                 rsi_val = data['RSI'].iloc[-1]
-                report = f"### Executive Summary\n**Sentiment:** {fg_label} ({int(fg_score)}/100)\n**News:** {news_lbl}\n**Trend:** {trend}\n**RSI:** {rsi_val:.1f}"
+                report = f"### Executive Summary\n**Sentiment:** {fg_label} ({int(fear_score)}/100)\n**News:** {news_lbl}\n**Trend:** {trend}\n**RSI:** {rsi_val:.1f}"
                 st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
 
             with tabs[2]:
