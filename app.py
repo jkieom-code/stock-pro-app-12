@@ -148,7 +148,7 @@ st.markdown("""
     
     /* Layout Fixes */
     .block-container {
-        padding-top: 2rem;
+        padding-top: 5rem; /* Increased padding to clear GitHub header */
         max-width: 98%;
     }
     #MainMenu {visibility: hidden;}
