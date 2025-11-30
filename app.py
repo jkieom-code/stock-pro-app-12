@@ -158,6 +158,7 @@ db = get_database()
 if 'user_id' not in st.session_state: st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
+if 'mode' not in st.session_state: st.session_state['mode'] = "Asset Terminal"
 
 # --- Loading Screen ---
 if not st.session_state['splash_shown']:
@@ -378,8 +379,29 @@ with st.sidebar.expander("⚙️ Account Center"):
         logout_user()
 
 st.sidebar.markdown("---")
-mode = st.sidebar.radio("Navigation", ["Asset Terminal", "⭐ Favorites", "Media & News"])
+st.sidebar.markdown("## 📈 Navigation")
+
+# --- NAVIGATION BUTTONS (Replacing Radio) ---
+if st.sidebar.button("📈 Asset Terminal", use_container_width=True):
+    st.session_state['mode'] = "Asset Terminal"
+if st.sidebar.button("⭐ Favorites", use_container_width=True):
+    st.session_state['mode'] = "⭐ Favorites"
+if st.sidebar.button("📺 Media & News", use_container_width=True):
+    st.session_state['mode'] = "Media & News"
+
+mode = st.session_state['mode']
+
 st.sidebar.markdown("---")
+
+# --- CURRENCY CONVERTER (Moved Up) ---
+with st.sidebar.expander("🧮 Currency Calc", expanded=False):
+    cc_amt = st.number_input("Amt", 100.0)
+    c1, c2 = st.columns(2)
+    with c1: cc_f = st.selectbox("From", ["USD", "KRW", "EUR", "JPY", "BTC"])
+    with c2: cc_to = st.selectbox("To", ["KRW", "USD", "EUR", "JPY", "BTC"])
+    if st.button("Convert"):
+        res, rate = calculate_currency_conversion(cc_amt, cc_f, cc_to)
+        if res: st.success(f"{res:,.2f} {cc_to}")
 
 # --- FAVORITES ---
 if mode == "⭐ Favorites":
@@ -438,15 +460,6 @@ elif mode == "Asset Terminal":
     show_sma = st.sidebar.toggle("SMA", True)
     show_bb = st.sidebar.toggle("Bollinger Bands")
     show_rsi = st.sidebar.toggle("RSI")
-
-    with st.sidebar.expander("🧮 Currency Calc"):
-        cc_amt = st.number_input("Amt", 100.0)
-        c1, c2 = st.columns(2)
-        cc_f = c1.selectbox("From", ["USD", "KRW", "EUR", "JPY", "BTC"])
-        cc_t = c2.selectbox("To", ["KRW", "USD", "EUR", "JPY", "BTC"])
-        if st.button("Convert"):
-            res, rate = calculate_currency_conversion(cc_amt, cc_f, cc_t)
-            if res: st.success(f"{res:,.2f} {cc_t}")
 
     if st.sidebar.button("🔄 Refresh Data", type="primary"): st.rerun()
 
