@@ -185,8 +185,6 @@ def get_stock_data(ticker, interval, period, start=None, end=None):
         # Determine strict period to avoid "outdated" gaps
         # If intraday, force 5d to ensure we capture the last trading session even on weekends
         if interval in ['1m', '5m', '1h'] and period == '1d':
-            # For Crypto/Forex (which trade 24/7), 1d is fine.
-            # But we can default to 5d for safety across all to ensure continuity.
             period = "5d"
             
         if interval == "1d" and end:
@@ -246,14 +244,22 @@ def get_fear_and_greed_proxy():
     except: return 50, "Neutral"
 
 def safe_extract_news_title(item):
-    if not isinstance(item, dict): return None
-    if 'title' in item and item['title']: return item['title']
+    """Recursively search for a title in a messy dictionary."""
+    if not isinstance(item, dict):
+        return None
+    
+    if 'title' in item and item['title']:
+        return item['title']
+    
     if 'content' in item and isinstance(item['content'], dict):
-        if 'title' in item['content'] and item['content']['title']: return item['content']['title']
+        if 'title' in item['content'] and item['content']['title']:
+            return item['content']['title']
+            
     for key, value in item.items():
         if isinstance(value, dict):
             res = safe_extract_news_title(value)
             if res: return res
+            
     return None
 
 def analyze_news_sentiment(news_items):
@@ -424,16 +430,12 @@ elif mode == "Asset Terminal":
 
     if ticker:
         try:
-            # Force LIVE data logic
-            if interval == "1d":
-                data = get_stock_data(ticker, interval, period, start_date, end_date)
-            else:
-                data = get_stock_data(ticker, interval, period)
+            if interval == "1d": data = get_stock_data(ticker, interval, period, start_date, end_date)
+            else: data = get_stock_data(ticker, interval, period)
             
             # --- Attempt to get LIVE price from INFO ---
             try: 
                 info = yf.Ticker(ticker).info
-                # Priority: Current -> Regular -> Data Close
                 live_price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('ask')
             except: 
                 info = {}; live_price = None
@@ -512,11 +514,7 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
                 
-                # Rangebreaks
-                rangebreaks = []
-                if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h']:
-                    rangebreaks = [dict(bounds=["sat", "mon"])]
-                
+                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h'] else []
                 fig.update_layout(height=500, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks))
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -529,7 +527,7 @@ elif mode == "Asset Terminal":
 
                 polarities = []
                 for item in news:
-                    t = item.get('title')
+                    t = safe_extract_news_title(item)
                     if t: polarities.append(TextBlob(t).sentiment.polarity)
                 avg_pol = np.mean(polarities) if polarities else 0
                 news_lbl = "Positive" if avg_pol>0.05 else "Negative" if avg_pol<-0.05 else "Neutral"
@@ -564,9 +562,15 @@ elif mode == "Asset Terminal":
             with tabs[2]:
                 if news:
                     for i in news[:10]:
-                        t = i.get('title') or "News"
+                        t = safe_extract_news_title(i) or "News"
                         l = i.get('link') or "#"
+                        # Extra logic for URL cleanup if needed
+                        if 'clickThroughUrl' in i and isinstance(i['clickThroughUrl'], dict):
+                            l = i['clickThroughUrl'].get('url', l)
+                        
                         pub = i.get('publisher', 'Source')
+                        if isinstance(pub, dict): pub = pub.get('title', 'Source')
+                        
                         st.markdown(f"<div class='news-list-item'><div class='news-meta'>{pub}</div><a href='{l}' target='_blank' class='news-link'>{t}</a></div>", unsafe_allow_html=True)
                 else: st.info("No specific news.")
 
