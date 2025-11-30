@@ -70,7 +70,7 @@ st.markdown("""
     .gemini-logo { width: 100px; margin-top: 20px; animation: pulse 2s infinite; }
     @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
     
-    /* Layout Fixes - Increased padding for Github UI clearance */
+    /* Layout Fixes */
     .block-container { padding-top: 8rem; max-width: 98%; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     </style>
@@ -93,22 +93,24 @@ TRANS = {
     "English": {
         "Home": "🏠 Home", "Terminal": "📈 Asset Terminal", "Favs": "⭐ Favorites", "Media": "📺 Media & News",
         "Stocks": "Stocks", "Commodities": "Commodities", "Crypto": "Crypto", "Forex": "Currencies/Forex",
-        "Search": "Search Assets", "Search_Ph": "Symbol or Name...", "Trend_Stocks": "🔥 Trending Stocks",
+        "Search": "Search Assets", "Search_Ph": "Symbol or Name (e.g. Nvidia, Gold, BTC)...", "Trend_Stocks": "🔥 Trending Stocks",
         "Trend_Crypto": "🪙 Top Crypto", "Trend_Fx": "💱 Key Currencies", "Quick": "Quick Access",
         "Chart": "Chart", "AI": "AI Analysis", "News": "News", "Data": "Data", "Fund": "Fundamentals",
         "Convert": "Convert", "Rate_Err": "Rate Unavailable", "Forecast": "30-Period Forecast",
         "Sent": "Market Sentiment", "News_Sent": "News Tone", "Logout": "Log Out", "Delete": "Delete Account",
-        "Hero_Sub": "Market Intelligence for the Modern Investor", "Watchlist": "⭐ Watchlist", "Media_Center": "📺 Media Center"
+        "Hero_Sub": "Market Intelligence for the Modern Investor", "Watchlist": "⭐ Watchlist", "Media_Center": "📺 Media Center",
+        "Tab_Chart": "Chart", "Tab_AI": "AI Analysis", "Tab_News": "News", "Tab_Data": "Data", "Tab_Fund": "Fundamentals"
     },
     "한국어": {
         "Home": "🏠 홈", "Terminal": "📈 자산 터미널", "Favs": "⭐ 관심종목", "Media": "📺 미디어 & 뉴스",
         "Stocks": "주식", "Commodities": "원자재", "Crypto": "암호화폐", "Forex": "통화/외환",
-        "Search": "자산 검색", "Search_Ph": "심볼 또는 이름...", "Trend_Stocks": "🔥 인기 주식",
+        "Search": "자산 검색", "Search_Ph": "심볼 또는 이름 (예: 삼성전자, 비트코인)...", "Trend_Stocks": "🔥 인기 주식",
         "Trend_Crypto": "🪙 주요 암호화폐", "Trend_Fx": "💱 주요 통화", "Quick": "빠른 접속",
         "Chart": "차트", "AI": "AI 분석", "News": "뉴스", "Data": "데이터", "Fund": "기업 정보",
         "Convert": "변환", "Rate_Err": "환율 정보 없음", "Forecast": "30일 예측",
         "Sent": "시장 심리", "News_Sent": "뉴스 분위기", "Logout": "로그아웃", "Delete": "계정 삭제",
-        "Hero_Sub": "현대 투자자를 위한 시장 인텔리전스", "Watchlist": "⭐ 관심종목", "Media_Center": "📺 미디어 센터"
+        "Hero_Sub": "현대 투자자를 위한 시장 인텔리전스", "Watchlist": "⭐ 관심종목", "Media_Center": "📺 미디어 센터",
+        "Tab_Chart": "차트", "Tab_AI": "AI 분석", "Tab_News": "뉴스", "Tab_Data": "데이터", "Tab_Fund": "기업 정보"
     }
 }
 
@@ -151,12 +153,66 @@ if not st.session_state['logged_in']:
                 if len(uid)==6 and uid.isdigit(): signup_user(uid)
     st.stop()
 
-# --- Common Data Functions ---
+# --- Common Data Functions & EXPANDED ASSET MAP ---
 ASSET_MAP = {
-    "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
-    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
-    "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
-    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS"
+    # Crypto
+    "BITCOIN": "BTC-USD", "BTC": "BTC-USD",
+    "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
+    "DOGECOIN": "DOGE-USD", "DOGE": "DOGE-USD",
+    "SOLANA": "SOL-USD", "SOL": "SOL-USD",
+    "XRP": "XRP-USD", "RIPPLE": "XRP-USD",
+    "CARDANO": "ADA-USD", "ADA": "ADA-USD",
+    "SHIBA INU": "SHIB-USD", "SHIB": "SHIB-USD",
+    
+    # Commodities
+    "GOLD": "GC=F", "GC": "GC=F",
+    "SILVER": "SI=F", "SI": "SI=F",
+    "CRUDE OIL": "CL=F", "OIL": "CL=F", "WTI": "CL=F",
+    "BRENT": "BZ=F",
+    "NATURAL GAS": "NG=F", "GAS": "NG=F",
+    "COPPER": "HG=F",
+    "CORN": "ZC=F",
+    "SOYBEANS": "ZS=F",
+    
+    # Currencies / Forex
+    "USD/KRW": "KRW=X", "WON": "KRW=X", "KOREAN WON": "KRW=X", "KRW": "KRW=X",
+    "EUR/USD": "EURUSD=X", "EURO": "EURUSD=X",
+    "JPY/USD": "JPY=X", "YEN": "JPY=X",
+    "GBP/USD": "GBPUSD=X", "POUND": "GBPUSD=X",
+    "CAD/USD": "CAD=X",
+    
+    # Major Stocks (US & Korea)
+    "APPLE": "AAPL", "AAPL": "AAPL",
+    "MICROSOFT": "MSFT", "MSFT": "MSFT",
+    "NVIDIA": "NVDA", "NVDA": "NVDA",
+    "GOOGLE": "GOOGL", "ALPHABET": "GOOGL", "GOOG": "GOOG", "GOOGL": "GOOGL",
+    "AMAZON": "AMZN", "AMZN": "AMZN",
+    "TESLA": "TSLA", "TSLA": "TSLA",
+    "META": "META", "FACEBOOK": "META",
+    "NETFLIX": "NFLX", "NFLX": "NFLX",
+    "SAMSUNG": "005930.KS", "SAMSUNG ELECTRONICS": "005930.KS",
+    "SK HYNIX": "000660.KS",
+    "TSMC": "TSM",
+    "AMD": "AMD",
+    "INTEL": "INTC",
+    "COINBASE": "COIN",
+    "GAMESTOP": "GME",
+    "AMC": "AMC",
+    "DISNEY": "DIS",
+    "COCA COLA": "KO",
+    "PEPSI": "PEP",
+    "MCDONALDS": "MCD",
+    "STARBUCKS": "SBUX",
+    "NIKE": "NKE",
+    "WALMART": "WMT",
+    "COSTCO": "COST",
+    "JP MORGAN": "JPM",
+    "VISA": "V",
+    "MASTERCARD": "MA",
+    "PAYPAL": "PYPL",
+    "S&P 500": "^GSPC", "SPX": "^GSPC",
+    "NASDAQ": "^IXIC",
+    "DOW JONES": "^DJI"
 }
 
 @st.cache_data(ttl=60)
@@ -165,21 +221,18 @@ def get_live_price(ticker):
         d = yf.Ticker(ticker).history(period="1d")
         if not d.empty:
             price = d['Close'].iloc[-1]
-            prev = d['Open'].iloc[0] # Approx for intraday change
+            prev = d['Open'].iloc[0]
             change = ((price - prev)/prev)*100
             return price, change
     except: pass
     return 0.0, 0.0
 
 # --- NAVIGATION ---
-# Sidebar Logo Visual
 st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
 
-# Functional Home Button
 if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True):
     st.session_state['mode'] = "Home"
 
-# LANGUAGE TOGGLE BUTTON
 if st.sidebar.button("🌐 Language: " + st.session_state['lang']):
     st.session_state['lang'] = "한국어" if st.session_state['lang'] == "English" else "English"
     st.rerun()
@@ -193,28 +246,21 @@ mode = st.session_state['mode']
 
 st.sidebar.markdown("---")
 
-# --- CURRENCY CONVERTER ---
 with st.sidebar.expander("🧮 Currency Calc", expanded=False):
     cc_amt = st.number_input("Amt", 100.0)
     c1, c2 = st.columns(2)
     with c1: cc_f = st.selectbox("From", ["USD", "KRW", "EUR", "JPY", "BTC"])
     with c2: cc_to = st.selectbox("To", ["KRW", "USD", "EUR", "JPY", "BTC"])
-    # Helper for simple conversion
     def simple_convert(a, f, t):
         if f==t: return a
         try:
-            if f=='USD': r = yf.Ticker(f"{t}=X").history(period='1d')['Close'].iloc[-1]; return a/r if t!='KRW' else a*r # Logic varies by pair convention, simple hack:
-            # Fallback robust
-            pair = f"{f}{t}=X"
-            d = yf.Ticker(pair).history(period='1d')
+            if f=='USD': r = yf.Ticker(f"{t}=X").history(period='1d')['Close'].iloc[-1]; return a/r if t!='KRW' else a*r
+            pair = f"{f}{t}=X"; d = yf.Ticker(pair).history(period='1d')
             if not d.empty: return a * d['Close'].iloc[-1]
-            # Inverse
-            pair = f"{t}{f}=X"
-            d = yf.Ticker(pair).history(period='1d')
+            pair = f"{t}{f}=X"; d = yf.Ticker(pair).history(period='1d')
             if not d.empty: return a * (1/d['Close'].iloc[-1])
         except: return None
         return None
-
     if st.button(txt("Convert")):
         res = simple_convert(cc_amt, cc_f, cc_to)
         if res: st.success(f"{res:,.2f} {cc_to}")
@@ -222,95 +268,64 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
-    # Spacer to clear Github/Streamlit Header
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-    
-    # Top Right Account Center (Only on Home) - Single Button Style
     c_fill, c_acc = st.columns([3, 1])
     with c_acc:
         with st.expander(f"👤 ID: {st.session_state['user_id']}"):
             if st.button(txt("Logout"), use_container_width=True): logout_user()
             if st.button(txt("Delete"), type="primary", use_container_width=True): delete_account()
 
-    # Hero Section
     st.markdown(f"""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
     
-    # Big Search Bar
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
         if big_search:
-            # Redirect logic
             q_upper = big_search.upper().strip()
-            ticker_res = ASSET_MAP.get(q_upper, q_upper)
+            # Check for name/key in map, else treat as ticker
+            ticker_res = ASSET_MAP.get(q_upper, q_upper) 
             st.session_state['ticker_search'] = ticker_res
             st.session_state['mode'] = "Asset Terminal"
             st.rerun()
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
-    # Trending Dashboards
     t1, t2, t3 = st.columns(3)
-    
     def render_trend_card(title, assets):
         st.markdown(f"""<div class="trend-card"><div class="trend-header">{title}</div>""", unsafe_allow_html=True)
         for name, sym in assets.items():
             p, chg = get_live_price(sym)
             color = "#00C853" if chg >= 0 else "#D50000"
-            st.markdown(f"""
-            <div class="trend-item">
-                <span class="trend-name">{name}</span>
-                <span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="trend-item"><span class="trend-name">{name}</span><span class="trend-price" style="color:{color}">{p:,.2f} ({chg:+.2f}%)</span></div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with t1:
-        render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Amazon": "AMZN"})
-    with t2:
-        render_trend_card(txt("Trend_Crypto"), {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
-    with t3:
-        render_trend_card(txt("Trend_Fx"), {"USD/KRW": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"})
+    with t1: render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Amazon": "AMZN"})
+    with t2: render_trend_card(txt("Trend_Crypto"), {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
+    with t3: render_trend_card(txt("Trend_Fx"), {"USD/KRW": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"})
 
 # --- MODE: ASSET TERMINAL ---
 elif mode == "Asset Terminal":
-    # Initialize ticker from session state if coming from search
     default_ticker = st.session_state.get('ticker_search', "")
-    
-    # Layout: Sidebar controls still active
     st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span> Terminal</div>', unsafe_allow_html=True)
     
-    # Top Bar Search (Smaller)
     search_query = st.text_input(txt("Search"), value=default_ticker, placeholder=txt("Search_Ph"), label_visibility="collapsed")
     
-    # Resolve Ticker
     ticker = ""
     market_type = "Stocks"
     
     if search_query:
         q_upper = search_query.upper().strip()
         ticker = ASSET_MAP.get(q_upper, q_upper)
-        # Auto-classify
         if ticker.endswith("-USD"): market_type = "Crypto"
         elif ticker.endswith("=F"): market_type = "Commodities"
         elif ticker.endswith("=X"): market_type = "Currencies/Forex"
     else:
-        # Fallback to manual selection if search empty
         market_type_sel = st.sidebar.selectbox("Market Type", [txt("Stocks"), txt("Commodities"), txt("Forex"), txt("Crypto")])
-        
-        if market_type_sel == txt("Stocks"):
-            market_type="Stocks"; ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
-        elif market_type_sel == txt("Commodities"):
-            market_type="Commodities"; commodities = {"Gold": "GC=F", "Silver": "SI=F", "Crude Oil": "CL=F", "Copper": "HG=F", "Natural Gas": "NG=F", "Corn": "ZC=F", "Soybeans": "ZS=F"}
-            ticker = commodities[st.sidebar.selectbox("Select", list(commodities.keys()))]
-        elif market_type_sel == txt("Forex"):
-            market_type="Currencies/Forex"; currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
-            ticker = currencies[st.sidebar.selectbox("Select", list(currencies.keys()))]
-        elif market_type_sel == txt("Crypto"):
-            market_type="Crypto"; coins = {"Bitcoin (BTC)": "BTC-USD", "Ethereum (ETH)": "ETH-USD", "Solana (SOL)": "SOL-USD", "XRP": "XRP-USD", "Dogecoin": "DOGE-USD", "Cardano": "ADA-USD"}
-            ticker = coins[st.sidebar.selectbox("Select", list(coins.keys()))]
+        if market_type_sel == txt("Stocks"): market_type="Stocks"; ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
+        elif market_type_sel == txt("Commodities"): market_type="Commodities"; ticker = {"Gold":"GC=F","Silver":"SI=F","Oil":"CL=F"}[st.sidebar.selectbox("Select", ["Gold","Silver","Oil"])]
+        elif market_type_sel == txt("Forex"): market_type="Currencies/Forex"; ticker = {"USD/KRW":"KRW=X","EUR/USD":"EURUSD=X"}[st.sidebar.selectbox("Select", ["USD/KRW","EUR/USD"])]
+        elif market_type_sel == txt("Crypto"): market_type="Crypto"; ticker = {"Bitcoin":"BTC-USD","Ethereum":"ETH-USD"}[st.sidebar.selectbox("Select", ["Bitcoin","Ethereum"])]
 
-    # Save current ticker to state
     st.session_state['ticker_search'] = ticker
 
     user_favs = db[st.session_state['user_id']]['favorites']
@@ -320,7 +335,6 @@ elif mode == "Asset Terminal":
     else:
         if is_fav: db[st.session_state['user_id']]['favorites'].remove(ticker)
 
-    # Controls (Timeframe/Indicators)
     with st.sidebar.expander("⚙️ Chart Settings", expanded=True):
         timeframe = st.selectbox("Interval", ["1 Minute", "5 Minute", "1 Hour", "1 Day"])
         show_sma = st.toggle("SMA", True)
@@ -338,53 +352,32 @@ elif mode == "Asset Terminal":
 
     if st.sidebar.button("🔄 Refresh Data", type="primary"): st.rerun()
 
-    # Data Fetching & Display
     if ticker:
         try:
-            # Fetch Data
-            if interval == "1d":
-                data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
-            else:
-                data = yf.download(ticker, period=period, interval=interval, progress=False)
+            if interval == "1d": data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
+            else: data = yf.download(ticker, period=period, interval=interval, progress=False)
             
-            # Fallback for weekends/holidays
-            if (data.empty or len(data)<2) and period=="1d":
-                data = yf.download(ticker, period="5d", interval=interval, progress=False)
-                
+            if (data.empty or len(data)<2) and period=="1d": data = yf.download(ticker, period="5d", interval=interval, progress=False)
             if 'Volume' in data.columns: data = data[data['Volume']>0]
             data = data.dropna()
             
-            # Fetch info
             try: info = yf.Ticker(ticker).info
             except: info = {}
             try: news = yf.Ticker(ticker).news
             except: news = []
             
-            # Technicals
             if isinstance(data.columns, pd.MultiIndex): data.columns = data.columns.get_level_values(0)
+            data = calculate_technicals(data)
             
-            delta = data['Close'].diff()
-            gain = (delta.where(delta > 0, 0)).rolling(14).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-            rs = gain/loss
-            data['RSI'] = 100 - (100/(1+rs))
-            data['SMA'] = data['Close'].rolling(20).mean()
-            data['BB_Upper'] = data['SMA'] + 2*data['Close'].rolling(20).std()
-            data['BB_Lower'] = data['SMA'] - 2*data['Close'].rolling(20).std()
-
-            # Header
             curr_p = data['Close'].iloc[-1]
             prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
             chg = curr_p - prev_p
             pct = (chg/prev_p)*100 if prev_p else 0
-            
-            # Values for Grid
             open_p = data['Open'].iloc[-1]
             high_p = data['High'].iloc[-1]
             low_p = data['Low'].iloc[-1]
             vol = data['Volume'].iloc[-1] if 'Volume' in data.columns else 0
 
-            # Currency
             curr_code = info.get('currency', 'USD')
             try: krw_rate = yf.Ticker("KRW=X").history(period="1d")['Close'].iloc[-1]
             except: krw_rate = 0
@@ -409,7 +402,6 @@ elif mode == "Asset Terminal":
             </div>
             """, unsafe_allow_html=True)
 
-            # Tabs
             tabs = st.tabs([txt("Tab_Chart"), txt("Tab_AI"), txt("Tab_News"), txt("Tab_Data")] + ([txt("Tab_Fund")] if market_type=="Stocks" else []))
             
             with tabs[0]:
@@ -429,14 +421,12 @@ elif mode == "Asset Terminal":
                 st.plotly_chart(fig, use_container_width=True)
 
             with tabs[1]:
-                # --- FEAR & GREED (Proxy) ---
                 try:
                     vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]
                     fear_score = max(0, min(100, 100 - (vix - 10) * 2.5))
                     fg_label = "Fear" if fear_score < 45 else "Greed" if fear_score > 55 else "Neutral"
                 except: fear_score=50; fg_label="Neutral"
 
-                # --- NEWS SENTIMENT ---
                 polarities = []
                 for item in news:
                     t = item.get('title')
@@ -466,7 +456,6 @@ elif mode == "Asset Terminal":
                         st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
                     else: st.warning("Insufficient data for forecast")
 
-                # Report Text
                 trend = "Bullish" if curr_p > data['SMA'].iloc[-1] else "Bearish"
                 rsi_val = data['RSI'].iloc[-1]
                 report = f"### Executive Summary\n**Sentiment:** {fg_label} ({int(fear_score)}/100)\n**News:** {news_lbl}\n**Trend:** {trend}\n**RSI:** {rsi_val:.1f}"
@@ -494,12 +483,9 @@ elif mode == "Asset Terminal":
                         st.write(f"**Sector:** {info.get('sector', 'N/A')}")
                         st.write(f"**Industry:** {info.get('industry', 'N/A')}")
                         st.write(f"**Country:** {info.get('country', 'N/A')}")
-                        st.write(f"**Employees:** {info.get('fullTimeEmployees', 'N/A')}")
                     with c2:
                         st.write(f"**Website:** {info.get('website', 'N/A')}")
-                        st.write(f"**City:** {info.get('city', 'N/A')}")
-                        st.write(f"**Phone:** {info.get('phone', 'N/A')}")
-                    st.markdown("---")
+                        st.write(f"**Employees:** {info.get('fullTimeEmployees', 'N/A')}")
                     st.write("**Business Summary:**")
                     st.write(info.get('longBusinessSummary', 'N/A'))
 
@@ -521,47 +507,31 @@ elif mode == "Favorites":
 elif mode == "Media & News":
     st.title(txt("Media_Center"))
     st.subheader(txt("Quick"))
-    
-    # Text-Based Buttons for Quick Access (More Reliable than Images)
     qa1, qa2, qa3 = st.columns(3)
-    with qa1:
-        st.link_button("🌐 Investing.com", "https://www.investing.com", use_container_width=True)
-    with qa2:
-        st.link_button("📈 Yahoo Finance", "https://finance.yahoo.com", use_container_width=True)
-    with qa3:
-        st.link_button("🔎 Google Finance", "https://www.google.com/finance", use_container_width=True)
+    with qa1: st.link_button("🌐 Investing.com", "https://www.investing.com", use_container_width=True)
+    with qa2: st.link_button("📈 Yahoo Finance", "https://finance.yahoo.com", use_container_width=True)
+    with qa3: st.link_button("🔎 Google Finance", "https://www.google.com/finance", use_container_width=True)
 
     st.markdown("---")
-    
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Bloomberg TV")
-        st.video("https://www.youtube.com/watch?v=iEpJwprxDdk")
-        st.subheader("Sky News")
-        st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
+        st.subheader("Bloomberg TV"); st.video("https://www.youtube.com/watch?v=iEpJwprxDdk")
+        st.subheader("Sky News"); st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
     with c2:
-        st.subheader("CNA Asia")
-        st.video("https://www.youtube.com/watch?v=XWq5kBlakcQ")
-        st.subheader("ABC Australia")
-        st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
+        st.subheader("CNA Asia"); st.video("https://www.youtube.com/watch?v=XWq5kBlakcQ")
+        st.subheader("ABC Australia"); st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
     
     st.markdown("---")
-    st.subheader(txt("Live_Wires"))
-    
     def get_feed(url):
         try:
-            r = requests.get(url, timeout=3)
-            root = ET.fromstring(r.content)
+            r = requests.get(url, timeout=3); root = ET.fromstring(r.content)
             return [{'t':i.find('title').text, 'l':i.find('link').text} for i in root.findall('.//item')[:5]]
         except: return []
 
     t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
     with t1:
-        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"):
-            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t2:
-        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"):
-            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t3:
-        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"):
-            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
