@@ -40,10 +40,18 @@ st.markdown("""
         color: #0d6efd;
         display: flex;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
     .prostock-logo span {
         color: #333;
+    }
+    
+    /* Search Bar Styling */
+    [data-testid="stTextInput"] input {
+        font-size: 18px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #dfe1e5;
     }
     
     /* Sidebar Styling */
@@ -70,6 +78,7 @@ st.markdown("""
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 20px;
         margin-bottom: 20px;
+        margin-top: 10px;
     }
     
     /* Key Stats Grid */
@@ -369,6 +378,26 @@ def fetch_rss_feed(url):
         return items
     except: return []
 
+# --- Smart Search Map ---
+ASSET_MAP = {
+    # Crypto
+    "BITCOIN": "BTC-USD", "BTC": "BTC-USD",
+    "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
+    "DOGECOIN": "DOGE-USD", "DOGE": "DOGE-USD",
+    "SOLANA": "SOL-USD", "SOL": "SOL-USD",
+    "XRP": "XRP-USD",
+    # Commodities
+    "GOLD": "GC=F",
+    "SILVER": "SI=F",
+    "OIL": "CL=F", "CRUDE OIL": "CL=F",
+    # Currencies
+    "USD/KRW": "KRW=X", "WON": "KRW=X",
+    "EUR/USD": "EURUSD=X",
+    # Stocks (Common)
+    "APPLE": "AAPL", "TESLA": "TSLA", "NVIDIA": "NVDA", "GOOGLE": "GOOGL",
+    "AMAZON": "AMZN", "MICROSOFT": "MSFT", "SAMSUNG": "005930.KS"
+}
+
 # --- Sidebar ---
 st.sidebar.markdown(f"### 👤 User: {st.session_state['user_id']}")
 with st.sidebar.expander("⚙️ Account Center"):
@@ -381,7 +410,7 @@ with st.sidebar.expander("⚙️ Account Center"):
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 📈 Navigation")
 
-# --- NAVIGATION BUTTONS (Replacing Radio) ---
+# --- NAVIGATION BUTTONS ---
 if st.sidebar.button("📈 Asset Terminal", use_container_width=True):
     st.session_state['mode'] = "Asset Terminal"
 if st.sidebar.button("⭐ Favorites", use_container_width=True):
@@ -393,7 +422,7 @@ mode = st.session_state['mode']
 
 st.sidebar.markdown("---")
 
-# --- CURRENCY CONVERTER (Moved Up) ---
+# --- CURRENCY CONVERTER ---
 with st.sidebar.expander("🧮 Currency Calc", expanded=False):
     cc_amt = st.number_input("Amt", 100.0)
     c1, c2 = st.columns(2)
@@ -421,38 +450,49 @@ if mode == "⭐ Favorites":
 
 # --- TERMINAL ---
 elif mode == "Asset Terminal":
-    # Logo
-    st.markdown('<div class="prostock-logo">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+    # Logo & Search Bar
+    c_logo, c_search = st.columns([1, 2])
+    with c_logo:
+        st.markdown('<div class="prostock-logo">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+    with c_search:
+        search_query = st.text_input("Search Assets (Crypto, Stocks, Commodities...)", placeholder="e.g. Bitcoin, Gold, NVDA...", label_visibility="collapsed")
 
-    # --- Asset Selector ---
-    market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex", "Crypto"])
+    # --- Determine Ticker & Market Type from Search or Sidebar ---
     ticker = ""
-    
-    if market_type == "Stocks":
-        ticker = st.sidebar.text_input("Ticker Symbol", value="AAPL").upper()
-    elif market_type == "Commodities":
-        commodities = {"Gold": "GC=F", "Silver": "SI=F", "Crude Oil": "CL=F", "Copper": "HG=F", "Natural Gas": "NG=F", "Corn": "ZC=F", "Soybeans": "ZS=F"}
-        selected_comm = st.sidebar.selectbox("Select Commodity", list(commodities.keys()))
-        ticker = commodities[selected_comm]
-    elif market_type == "Currencies/Forex":
-        currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
-        selected_curr = st.sidebar.selectbox("Select Pair", list(currencies.keys()))
-        ticker = currencies[selected_curr]
-    elif market_type == "Crypto":
-        coins = {
-            "Bitcoin (BTC)": "BTC-USD",
-            "Ethereum (ETH)": "ETH-USD",
-            "Solana (SOL)": "SOL-USD",
-            "XRP (XRP)": "XRP-USD",
-            "Dogecoin (DOGE)": "DOGE-USD",
-            "Cardano (ADA)": "ADA-USD",
-            "Shiba Inu (SHIB)": "SHIB-USD",
-            "Binance Coin (BNB)": "BNB-USD",
-            "Avalanche (AVAX)": "AVAX-USD",
-            "Chainlink (LINK)": "LINK-USD"
-        }
-        selected_coin = st.sidebar.selectbox("Select Coin", list(coins.keys()))
-        ticker = coins[selected_coin]
+    market_type = "Stocks" # Default
+
+    if search_query:
+        # 1. Smart Map Lookup
+        q_upper = search_query.upper().strip()
+        if q_upper in ASSET_MAP:
+            ticker = ASSET_MAP[q_upper]
+        else:
+            ticker = q_upper # Assume ticker
+        
+        # 2. Auto-Classify Market Type
+        if ticker.endswith("-USD"): market_type = "Crypto"
+        elif ticker.endswith("=F"): market_type = "Commodities"
+        elif ticker.endswith("=X"): market_type = "Currencies/Forex"
+        else: market_type = "Stocks"
+        
+    else:
+        # Fallback to Sidebar
+        market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex", "Crypto"])
+        
+        if market_type == "Stocks":
+            ticker = st.sidebar.text_input("Ticker Symbol", value="AAPL").upper()
+        elif market_type == "Commodities":
+            commodities = {"Gold": "GC=F", "Silver": "SI=F", "Crude Oil": "CL=F", "Copper": "HG=F", "Natural Gas": "NG=F", "Corn": "ZC=F", "Soybeans": "ZS=F"}
+            selected_comm = st.sidebar.selectbox("Select Commodity", list(commodities.keys()))
+            ticker = commodities[selected_comm]
+        elif market_type == "Currencies/Forex":
+            currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
+            selected_curr = st.sidebar.selectbox("Select Pair", list(currencies.keys()))
+            ticker = currencies[selected_curr]
+        elif market_type == "Crypto":
+            coins = {"Bitcoin (BTC)": "BTC-USD", "Ethereum (ETH)": "ETH-USD", "Solana (SOL)": "SOL-USD", "XRP": "XRP-USD", "Dogecoin": "DOGE-USD", "Cardano": "ADA-USD"}
+            selected_coin = st.sidebar.selectbox("Select Coin", list(coins.keys()))
+            ticker = coins[selected_coin]
 
     user_favs = db[st.session_state['user_id']]['favorites']
     is_fav = ticker in user_favs
@@ -537,14 +577,32 @@ elif mode == "Asset Terminal":
 
             with tabs[0]:
                 fig = go.Figure()
-                fig.add_trace(go.Candlestick(x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'], name='Price', increasing_line_color='#00C853', decreasing_line_color='#D50000'))
+                
+                # --- CHART LOGIC: Mountain for Crypto, Candle for Others ---
+                if market_type == "Crypto":
+                    # Mountain Style
+                    fig.add_trace(go.Scatter(
+                        x=data.index, y=data['Close'],
+                        fill='tozeroy',
+                        mode='lines',
+                        line=dict(color='#2962FF', width=2),
+                        name='Price'
+                    ))
+                else:
+                    # Candlestick Style
+                    fig.add_trace(go.Candlestick(
+                        x=data.index, open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'],
+                        name='Price',
+                        increasing_line_color='#00C853', decreasing_line_color='#D50000'
+                    ))
+                
+                # Overlays
                 if show_sma: fig.add_trace(go.Scatter(x=data.index, y=data['SMA'], line=dict(color='#FFA000', width=1), name='SMA'))
                 if show_bb:
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', width=1, dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', width=1, dash='dot'), name='BB Lo'))
                 
-                # FIX: Only hide weekends for Stocks and Commodities. 
-                # Crypto and Forex trade 24/7 or have Sunday sessions, so we must show weekends.
+                # Rangebreaks (Hide weekends only for stocks/commodities)
                 rangebreaks = []
                 if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h', '1d']:
                     rangebreaks = [dict(bounds=["sat", "mon"])]
