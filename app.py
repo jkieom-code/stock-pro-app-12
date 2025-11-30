@@ -86,6 +86,34 @@ if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
 if 'mode' not in st.session_state: st.session_state['mode'] = "Home" # Default to Home
 if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = ""
+if 'lang' not in st.session_state: st.session_state['lang'] = "English" # Default Language
+
+# --- TRANSLATION DICTIONARY ---
+TRANS = {
+    "English": {
+        "Home": "🏠 Home", "Terminal": "📈 Asset Terminal", "Favs": "⭐ Favorites", "Media": "📺 Media & News",
+        "Stocks": "Stocks", "Commodities": "Commodities", "Crypto": "Crypto", "Forex": "Currencies/Forex",
+        "Search": "Search Assets", "Search_Ph": "Symbol or Name...", "Trend_Stocks": "🔥 Trending Stocks",
+        "Trend_Crypto": "🪙 Top Crypto", "Trend_Fx": "💱 Key Currencies", "Quick": "Quick Access",
+        "Chart": "Chart", "AI": "AI Analysis", "News": "News", "Data": "Data", "Fund": "Fundamentals",
+        "Convert": "Convert", "Rate_Err": "Rate Unavailable", "Forecast": "30-Period Forecast",
+        "Sent": "Market Sentiment", "News_Sent": "News Tone", "Logout": "Log Out", "Delete": "Delete Account",
+        "Hero_Sub": "Market Intelligence for the Modern Investor", "Watchlist": "⭐ Watchlist", "Media_Center": "📺 Media Center"
+    },
+    "한국어": {
+        "Home": "🏠 홈", "Terminal": "📈 자산 터미널", "Favs": "⭐ 관심종목", "Media": "📺 미디어 & 뉴스",
+        "Stocks": "주식", "Commodities": "원자재", "Crypto": "암호화폐", "Forex": "통화/외환",
+        "Search": "자산 검색", "Search_Ph": "심볼 또는 이름...", "Trend_Stocks": "🔥 인기 주식",
+        "Trend_Crypto": "🪙 주요 암호화폐", "Trend_Fx": "💱 주요 통화", "Quick": "빠른 접속",
+        "Chart": "차트", "AI": "AI 분석", "News": "뉴스", "Data": "데이터", "Fund": "기업 정보",
+        "Convert": "변환", "Rate_Err": "환율 정보 없음", "Forecast": "30일 예측",
+        "Sent": "시장 심리", "News_Sent": "뉴스 분위기", "Logout": "로그아웃", "Delete": "계정 삭제",
+        "Hero_Sub": "현대 투자자를 위한 시장 인텔리전스", "Watchlist": "⭐ 관심종목", "Media_Center": "📺 미디어 센터"
+    }
+}
+
+def txt(key):
+    return TRANS[st.session_state['lang']].get(key, key)
 
 # --- Loading Screen ---
 if not st.session_state['splash_shown']:
@@ -148,13 +176,18 @@ def get_live_price(ticker):
 st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
 
 # Functional Home Button
-if st.sidebar.button("🏠 Home", type="secondary", use_container_width=True):
+if st.sidebar.button(txt("Home"), type="secondary", use_container_width=True):
     st.session_state['mode'] = "Home"
 
+# LANGUAGE TOGGLE BUTTON
+if st.sidebar.button("🌐 Language: " + st.session_state['lang']):
+    st.session_state['lang'] = "한국어" if st.session_state['lang'] == "English" else "English"
+    st.rerun()
+
 st.sidebar.markdown("---")
-if st.sidebar.button("📈 Asset Terminal", use_container_width=True): st.session_state['mode'] = "Asset Terminal"
-if st.sidebar.button("⭐ Favorites", use_container_width=True): st.session_state['mode'] = "Favorites"
-if st.sidebar.button("📺 Media & News", use_container_width=True): st.session_state['mode'] = "Media & News"
+if st.sidebar.button(txt("Terminal"), use_container_width=True): st.session_state['mode'] = "Asset Terminal"
+if st.sidebar.button(txt("Favs"), use_container_width=True): st.session_state['mode'] = "Favorites"
+if st.sidebar.button(txt("Media"), use_container_width=True): st.session_state['mode'] = "Media & News"
 
 mode = st.session_state['mode']
 
@@ -182,10 +215,10 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
         except: return None
         return None
 
-    if st.button("Convert"):
+    if st.button(txt("Convert")):
         res = simple_convert(cc_amt, cc_f, cc_to)
         if res: st.success(f"{res:,.2f} {cc_to}")
-        else: st.error("Rate unavailable")
+        else: st.error(txt("Rate_Err"))
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
@@ -196,16 +229,16 @@ if mode == "Home":
     c_fill, c_acc = st.columns([3, 1])
     with c_acc:
         with st.expander(f"👤 ID: {st.session_state['user_id']}"):
-            if st.button("Log Out", use_container_width=True): logout_user()
-            if st.button("Delete Account", type="primary", use_container_width=True): delete_account()
+            if st.button(txt("Logout"), use_container_width=True): logout_user()
+            if st.button(txt("Delete"), type="primary", use_container_width=True): delete_account()
 
     # Hero Section
-    st.markdown("""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">Market Intelligence for the Modern Investor</p></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">{txt("Hero_Sub")}</p></div>""", unsafe_allow_html=True)
     
     # Big Search Bar
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
-        big_search = st.text_input("🔍 Search markets (e.g. Apple, Bitcoin, Gold...)", placeholder="Search for stocks, crypto, or currencies...", label_visibility="collapsed")
+        big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
         if big_search:
             # Redirect logic
             q_upper = big_search.upper().strip()
@@ -233,11 +266,11 @@ if mode == "Home":
         st.markdown("</div>", unsafe_allow_html=True)
 
     with t1:
-        render_trend_card("🔥 Trending Stocks", {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Amazon": "AMZN"})
+        render_trend_card(txt("Trend_Stocks"), {"NVIDIA": "NVDA", "Tesla": "TSLA", "Apple": "AAPL", "Amazon": "AMZN"})
     with t2:
-        render_trend_card("🪙 Top Crypto", {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
+        render_trend_card(txt("Trend_Crypto"), {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Solana": "SOL-USD", "XRP": "XRP-USD"})
     with t3:
-        render_trend_card("💱 Key Currencies", {"USD/KRW": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"})
+        render_trend_card(txt("Trend_Fx"), {"USD/KRW": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"})
 
 # --- MODE: ASSET TERMINAL ---
 elif mode == "Asset Terminal":
@@ -248,7 +281,7 @@ elif mode == "Asset Terminal":
     st.markdown('<div class="prostock-logo" style="font-size:24px;">Pro<span>Stock</span> Terminal</div>', unsafe_allow_html=True)
     
     # Top Bar Search (Smaller)
-    search_query = st.text_input("Search Assets", value=default_ticker, placeholder="Symbol or Name...", label_visibility="collapsed")
+    search_query = st.text_input(txt("Search"), value=default_ticker, placeholder=txt("Search_Ph"), label_visibility="collapsed")
     
     # Resolve Ticker
     ticker = ""
@@ -263,16 +296,18 @@ elif mode == "Asset Terminal":
         elif ticker.endswith("=X"): market_type = "Currencies/Forex"
     else:
         # Fallback to manual selection if search empty
-        market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex", "Crypto"])
-        if market_type == "Stocks": ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
-        elif market_type == "Commodities":
-            commodities = {"Gold": "GC=F", "Silver": "SI=F", "Crude Oil": "CL=F", "Copper": "HG=F", "Natural Gas": "NG=F", "Corn": "ZC=F", "Soybeans": "ZS=F"}
+        market_type_sel = st.sidebar.selectbox("Market Type", [txt("Stocks"), txt("Commodities"), txt("Forex"), txt("Crypto")])
+        
+        if market_type_sel == txt("Stocks"):
+            market_type="Stocks"; ticker = st.sidebar.text_input("Ticker", "AAPL").upper()
+        elif market_type_sel == txt("Commodities"):
+            market_type="Commodities"; commodities = {"Gold": "GC=F", "Silver": "SI=F", "Crude Oil": "CL=F", "Copper": "HG=F", "Natural Gas": "NG=F", "Corn": "ZC=F", "Soybeans": "ZS=F"}
             ticker = commodities[st.sidebar.selectbox("Select", list(commodities.keys()))]
-        elif market_type == "Currencies/Forex":
-            currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
+        elif market_type_sel == txt("Forex"):
+            market_type="Currencies/Forex"; currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
             ticker = currencies[st.sidebar.selectbox("Select", list(currencies.keys()))]
-        elif market_type == "Crypto":
-            coins = {"Bitcoin (BTC)": "BTC-USD", "Ethereum (ETH)": "ETH-USD", "Solana (SOL)": "SOL-USD", "XRP": "XRP-USD", "Dogecoin": "DOGE-USD", "Cardano": "ADA-USD"}
+        elif market_type_sel == txt("Crypto"):
+            market_type="Crypto"; coins = {"Bitcoin (BTC)": "BTC-USD", "Ethereum (ETH)": "ETH-USD", "Solana (SOL)": "SOL-USD", "XRP": "XRP-USD", "Dogecoin": "DOGE-USD", "Cardano": "ADA-USD"}
             ticker = coins[st.sidebar.selectbox("Select", list(coins.keys()))]
 
     # Save current ticker to state
@@ -307,7 +342,6 @@ elif mode == "Asset Terminal":
     if ticker:
         try:
             # Fetch Data
-            # Handle start/end dates only for daily
             if interval == "1d":
                 data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
             else:
@@ -376,7 +410,7 @@ elif mode == "Asset Terminal":
             """, unsafe_allow_html=True)
 
             # Tabs
-            tabs = st.tabs(["Chart", "AI Analysis", "News", "Data"] + (["Fundamentals"] if market_type=="Stocks" else []))
+            tabs = st.tabs([txt("Tab_Chart"), txt("Tab_AI"), txt("Tab_News"), txt("Tab_Data")] + ([txt("Tab_Fund")] if market_type=="Stocks" else []))
             
             with tabs[0]:
                 fig = go.Figure()
@@ -412,11 +446,11 @@ elif mode == "Asset Terminal":
 
                 c1, c2 = st.columns([1,2])
                 with c1:
-                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fear_score, title={'text': f"Market Sentiment"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
+                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fear_score, title={'text': txt("Sent")}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
                     fig_g.update_layout(height=300, margin=dict(l=20,r=20,t=50,b=20))
                     st.plotly_chart(fig_g, use_container_width=True)
                 with c2:
-                    st.markdown("#### AI Forecast")
+                    st.markdown(f"#### AI {txt('Forecast')}")
                     if len(data) > 30:
                         df_ml = data[['Close']].dropna().reset_index()
                         df_ml['i'] = df_ml.index
@@ -473,7 +507,7 @@ elif mode == "Asset Terminal":
 
 # --- MODE: FAVORITES ---
 elif mode == "Favorites":
-    st.title("⭐ Watchlist")
+    st.title(txt("Watchlist"))
     user_favs = db[st.session_state['user_id']]['favorites']
     if not user_favs: st.info("No favorites.")
     else:
@@ -485,8 +519,8 @@ elif mode == "Favorites":
 
 # --- MODE: MEDIA ---
 elif mode == "Media & News":
-    st.title("📺 Media Center")
-    st.subheader("Quick Access")
+    st.title(txt("Media_Center"))
+    st.subheader(txt("Quick"))
     
     # Text-Based Buttons for Quick Access (More Reliable than Images)
     qa1, qa2, qa3 = st.columns(3)
@@ -512,7 +546,7 @@ elif mode == "Media & News":
         st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
     
     st.markdown("---")
-    st.subheader("Live Wires")
+    st.subheader(txt("Live_Wires"))
     
     def get_feed(url):
         try:
