@@ -34,7 +34,6 @@ st.markdown("""
     
     /* Homepage Elements */
     .hero-container { padding: 20px 20px; text-align: center; }
-    .big-search-container { max-width: 700px; margin: 0 auto 40px auto; }
     
     /* Trending Cards */
     .trend-card {
@@ -49,10 +48,7 @@ st.markdown("""
     .trend-price { font-weight: 600; }
     
     /* Account Top Right */
-    .account-bar {
-        display: flex; justify-content: flex-end; align-items: center; gap: 15px;
-        padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px;
-    }
+    .account-bar { display: flex; justify-content: flex-end; align-items: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
     .user-badge { font-weight: 600; color: #555; background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
     
     /* Existing Styles */
@@ -154,35 +150,25 @@ if not st.session_state['logged_in']:
 # --- Common Data Functions & ASSET MAP ---
 ASSET_MAP = {
     # --- ENGLISH ---
-    # Crypto
     "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
     "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
     "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
     "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS",
-    
     # --- KOREAN (한국어) ---
-    # Crypto
-    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", 
-    "솔라나": "SOL-USD", "도지코인": "DOGE-USD", "에이다": "ADA-USD",
-    
-    # Stocks
-    "삼성전자": "005930.KS", "삼성": "005930.KS", "하이닉스": "000660.KS", "SK하이닉스": "000660.KS",
-    "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA", "마이크로소프트": "MSFT", 
-    "구글": "GOOGL", "아마존": "AMZN", "넷플릭스": "NFLX", "디즈니": "DIS",
-    "코카콜라": "KO", "나이키": "NKE", "스타벅스": "SBUX",
-    
-    # Commodities
-    "금": "GC=F", "골드": "GC=F", "은": "SI=F", "실버": "SI=F",
-    "원유": "CL=F", "오일": "CL=F", "천연가스": "NG=F", "구리": "HG=F",
-    
-    # Currencies
-    "환율": "KRW=X", "원달러": "KRW=X", "달러": "KRW=X", 
-    "유로": "EURUSD=X", "엔화": "JPY=X", "파운드": "GBPUSD=X"
+    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", "솔라나": "SOL-USD", 
+    "삼성전자": "005930.KS", "삼성": "005930.KS", "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA",
+    "금": "GC=F", "원유": "CL=F", "환율": "KRW=X", "원달러": "KRW=X"
 }
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=10) # Reduced TTL for fresher prices
 def get_live_price(ticker):
     try:
+        # Try fetching real-time info first
+        info = yf.Ticker(ticker).info
+        if 'currentPrice' in info: return info['currentPrice'], 0.0
+        if 'regularMarketPrice' in info: return info['regularMarketPrice'], 0.0
+        
+        # Fallback to history
         d = yf.Ticker(ticker).history(period="1d")
         if not d.empty:
             price = d['Close'].iloc[-1]
@@ -192,16 +178,20 @@ def get_live_price(ticker):
     except: pass
     return 0.0, 0.0
 
-# --- RESTORED HELPER FUNCTIONS ---
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=10) # 10s Cache for live charts
 def get_stock_data(ticker, interval, period, start=None, end=None):
     try:
-        if interval == "1d" and start and end:
+        # For 1d interval, extend end date to ensure today is captured
+        if interval == "1d" and end:
+            end = end + timedelta(days=1)
             data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
         else:
             data = yf.download(ticker, period=period, interval=interval, progress=False)
+        
+        # Fallback logic
         if (data.empty or len(data)<2) and period=="1d":
             data = yf.download(ticker, period="5d", interval=interval, progress=False)
+            
         if 'Volume' in data.columns: data = data[data['Volume']>0]
         data = data.dropna()
         return data
@@ -225,16 +215,13 @@ def get_exchange_rate(pair="KRW=X"):
 def calculate_technicals(data):
     if len(data) < 2: return data
     delta = data['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
     rs = gain / loss
     data['RSI'] = 100 - (100 / (1 + rs))
-    data['SMA'] = data['Close'].rolling(window=20).mean()
-    data['EMA'] = data['Close'].ewm(span=50, adjust=False).mean()
-    data['BB_Middle'] = data['Close'].rolling(window=20).mean()
-    std = data['Close'].rolling(window=20).std()
-    data['BB_Upper'] = data['BB_Middle'] + 2 * std
-    data['BB_Lower'] = data['BB_Middle'] - 2 * std
+    data['SMA'] = data['Close'].rolling(20).mean()
+    data['BB_Upper'] = data['SMA'] + 2*data['Close'].rolling(20).std()
+    data['BB_Lower'] = data['SMA'] - 2*data['Close'].rolling(20).std()
     return data
 
 def get_fear_and_greed_proxy():
@@ -419,22 +406,31 @@ elif mode == "Asset Terminal":
 
     if ticker:
         try:
-            if interval == "1d": data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
-            else: data = yf.download(ticker, period=period, interval=interval, progress=False)
+            # FORCE FRESH DATA
+            if interval == "1d": 
+                data = get_stock_data(ticker, interval, period, start_date, end_date)
+            else:
+                data = get_stock_data(ticker, interval, period)
             
-            if (data.empty or len(data)<2) and period=="1d": data = yf.download(ticker, period="5d", interval=interval, progress=False)
-            if 'Volume' in data.columns: data = data[data['Volume']>0]
-            data = data.dropna()
-            
-            try: info = yf.Ticker(ticker).info
-            except: info = {}
+            # --- Attempt to get LIVE price from INFO ---
+            try: 
+                info = yf.Ticker(ticker).info
+                live_price = info.get('currentPrice') or info.get('regularMarketPrice')
+            except: 
+                info = {}; live_price = None
+                
             try: news = yf.Ticker(ticker).news
             except: news = []
             
             if isinstance(data.columns, pd.MultiIndex): data.columns = data.columns.get_level_values(0)
             data = calculate_technicals(data)
             
-            curr_p = data['Close'].iloc[-1]
+            # Use Live Price if available, else chart close
+            if live_price:
+                curr_p = live_price
+            else:
+                curr_p = data['Close'].iloc[-1]
+            
             prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
             chg = curr_p - prev_p
             pct = (chg/prev_p)*100 if prev_p else 0
@@ -481,27 +477,20 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
                 
-                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h'] else []
+                # Dynamic rangebreaks: Show weekends for Crypto/Forex, hide for Stocks
+                rangebreaks = []
+                if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h']:
+                    rangebreaks = [dict(bounds=["sat", "mon"])]
+                
                 fig.update_layout(height=500, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks))
                 st.plotly_chart(fig, use_container_width=True)
 
             with tabs[1]:
-                try:
-                    vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]
-                    fear_score = max(0, min(100, 100 - (vix - 10) * 2.5))
-                    fg_label = "Fear" if fear_score < 45 else "Greed" if fear_score > 55 else "Neutral"
-                except: fear_score=50; fg_label="Neutral"
-
-                polarities = []
-                for item in news:
-                    t = item.get('title')
-                    if t: polarities.append(TextBlob(t).sentiment.polarity)
-                avg_pol = np.mean(polarities) if polarities else 0
-                news_lbl = "Positive" if avg_pol>0.05 else "Negative" if avg_pol<-0.05 else "Neutral"
-
+                fg_score, fg_label = get_fear_and_greed_proxy()
+                pos, neg, neu, news_lbl = analyze_news_sentiment(news)
                 c1, c2 = st.columns([1,2])
                 with c1:
-                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fear_score, title={'text': txt("Sent")}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
+                    fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fg_score, title={'text': txt("Sent")}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
                     fig_g.update_layout(height=300, margin=dict(l=20,r=20,t=50,b=20))
                     st.plotly_chart(fig_g, use_container_width=True)
                 with c2:
@@ -523,7 +512,7 @@ elif mode == "Asset Terminal":
 
                 trend = "Bullish" if curr_p > data['SMA'].iloc[-1] else "Bearish"
                 rsi_val = data['RSI'].iloc[-1]
-                report = f"### Executive Summary\n**Sentiment:** {fg_label} ({int(fear_score)}/100)\n**News:** {news_lbl}\n**Trend:** {trend}\n**RSI:** {rsi_val:.1f}"
+                report = f"### Executive Summary\n**Sentiment:** {fg_label} ({int(fg_score)}/100)\n**News:** {news_lbl}\n**Trend:** {trend}\n**RSI:** {rsi_val:.1f}"
                 st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
 
             with tabs[2]:
