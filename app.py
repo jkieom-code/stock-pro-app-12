@@ -155,10 +155,31 @@ if not st.session_state['logged_in']:
 
 # --- Common Data Functions & ASSET MAP ---
 ASSET_MAP = {
+    # --- ENGLISH ---
+    # Crypto
     "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
     "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
     "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
-    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS"
+    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS",
+    
+    # --- KOREAN (한국어) ---
+    # Crypto
+    "비트코인": "BTC-USD", "이더리움": "ETH-USD", "리플": "XRP-USD", 
+    "솔라나": "SOL-USD", "도지코인": "DOGE-USD", "에이다": "ADA-USD",
+    
+    # Stocks
+    "삼성전자": "005930.KS", "삼성": "005930.KS", "하이닉스": "000660.KS", "SK하이닉스": "000660.KS",
+    "애플": "AAPL", "테슬라": "TSLA", "엔비디아": "NVDA", "마이크로소프트": "MSFT", 
+    "구글": "GOOGL", "아마존": "AMZN", "넷플릭스": "NFLX", "디즈니": "DIS",
+    "코카콜라": "KO", "나이키": "NKE", "스타벅스": "SBUX",
+    
+    # Commodities
+    "금": "GC=F", "골드": "GC=F", "은": "SI=F", "실버": "SI=F",
+    "원유": "CL=F", "오일": "CL=F", "천연가스": "NG=F", "구리": "HG=F",
+    
+    # Currencies
+    "환율": "KRW=X", "원달러": "KRW=X", "달러": "KRW=X", 
+    "유로": "EURUSD=X", "엔화": "JPY=X", "파운드": "GBPUSD=X"
 }
 
 @st.cache_data(ttl=60)
