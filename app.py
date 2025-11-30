@@ -67,8 +67,6 @@ st.markdown("""
     
     /* Loading */
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; animation: fadein 1s; }
-    .gemini-logo { width: 100px; margin-top: 20px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
     
     /* Layout Fixes */
     .block-container { padding-top: 8rem; max-width: 98%; }
@@ -121,7 +119,7 @@ def txt(key):
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
-        st.markdown("""<div class="loading-container"><h1 style='font-size: 50px; font-weight:900; color: #0d6efd;'>Pro<span style="color:#333;">Stock</span></h1><p style='color: #666;'>Institutional Grade Analytics</p><img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" class="gemini-logo"></div>""", unsafe_allow_html=True)
+        st.markdown("""<div class="loading-container"><h1 style='font-size: 50px; font-weight:900; color: #0d6efd;'>Pro<span style="color:#333;">Stock</span></h1><p style='color: #666; margin-bottom: 10px;'>Institutional Grade Analytics</p><p style='color: #0d6efd; font-size: 18px; font-weight: 500;'>professional personal banking</p></div>""", unsafe_allow_html=True)
     time.sleep(3)
     placeholder.empty()
     st.session_state['splash_shown'] = True
@@ -604,4 +602,4 @@ elif mode == "Media & News":
     with t2:
         for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t3:
-        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"): st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)>{n['t']}</a></div>", unsafe_allow_html=True)
