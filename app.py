@@ -425,8 +425,9 @@ elif mode == "Asset Terminal":
     st.markdown('<div class="prostock-logo">Pro<span>Stock</span></div>', unsafe_allow_html=True)
 
     # --- Asset Selector ---
-    market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex"])
+    market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex", "Crypto"])
     ticker = ""
+    
     if market_type == "Stocks":
         ticker = st.sidebar.text_input("Ticker Symbol", value="AAPL").upper()
     elif market_type == "Commodities":
@@ -434,9 +435,24 @@ elif mode == "Asset Terminal":
         selected_comm = st.sidebar.selectbox("Select Commodity", list(commodities.keys()))
         ticker = commodities[selected_comm]
     elif market_type == "Currencies/Forex":
-        currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X", "Bitcoin": "BTC-USD", "Ethereum": "ETH-USD"}
+        currencies = {"USD/KRW (Won)": "KRW=X", "EUR/USD": "EURUSD=X", "JPY/USD": "JPY=X", "GBP/USD": "GBPUSD=X"}
         selected_curr = st.sidebar.selectbox("Select Pair", list(currencies.keys()))
         ticker = currencies[selected_curr]
+    elif market_type == "Crypto":
+        coins = {
+            "Bitcoin (BTC)": "BTC-USD",
+            "Ethereum (ETH)": "ETH-USD",
+            "Solana (SOL)": "SOL-USD",
+            "XRP (XRP)": "XRP-USD",
+            "Dogecoin (DOGE)": "DOGE-USD",
+            "Cardano (ADA)": "ADA-USD",
+            "Shiba Inu (SHIB)": "SHIB-USD",
+            "Binance Coin (BNB)": "BNB-USD",
+            "Avalanche (AVAX)": "AVAX-USD",
+            "Chainlink (LINK)": "LINK-USD"
+        }
+        selected_coin = st.sidebar.selectbox("Select Coin", list(coins.keys()))
+        ticker = coins[selected_coin]
 
     user_favs = db[st.session_state['user_id']]['favorites']
     is_fav = ticker in user_favs
