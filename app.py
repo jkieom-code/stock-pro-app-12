@@ -513,7 +513,7 @@ elif mode == "Asset Terminal":
                         fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
                         fig_p.update_layout(height=200, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white")
                         st.plotly_chart(fig_p, use_container_width=True)
-                        st.caption(f"Projected Trend: **{currency} {pred[-1]:.2f}**")
+                        st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
                     else: st.warning("Insufficient data for forecast")
 
                 report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fg_score, fg_label, news_lbl)
