@@ -26,14 +26,14 @@ st.markdown("""
     .stApp { background-color: #ffffff; color: #333333; }
     
     /* Logo Styles */
-    .prostock-logo-sidebar { font-size: 24px; font-weight: 900; color: #0d6efd; margin-bottom: 20px; cursor: pointer; }
+    .prostock-logo-sidebar { font-size: 32px; font-weight: 900; color: #0d6efd; margin-bottom: 5px; text-align: center; }
     .prostock-logo-sidebar span { color: #333; }
     
     .homepage-logo { font-size: 60px; font-weight: 900; color: #0d6efd; text-align: center; margin-bottom: 10px; }
     .homepage-logo span { color: #333; }
     
     /* Homepage Elements */
-    .hero-container { padding: 40px 20px; text-align: center; }
+    .hero-container { padding: 20px 20px; text-align: center; }
     .big-search-container { max-width: 700px; margin: 0 auto 40px auto; }
     
     /* Trending Cards */
@@ -70,7 +70,8 @@ st.markdown("""
     .gemini-logo { width: 100px; margin-top: 20px; animation: pulse 2s infinite; }
     @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
     
-    .block-container { padding-top: 2rem; max-width: 98%; }
+    /* Layout Fixes - Increased padding for Github UI clearance */
+    .block-container { padding-top: 8rem; max-width: 98%; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -143,8 +144,11 @@ def get_live_price(ticker):
     return 0.0, 0.0
 
 # --- NAVIGATION ---
-# Sidebar Logo acts as "Home" button
-if st.sidebar.button("📈 ProStock", type="primary", use_container_width=True):
+# Sidebar Logo Visual
+st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+
+# Functional Home Button
+if st.sidebar.button("🏠 Home", type="secondary", use_container_width=True):
     st.session_state['mode'] = "Home"
 
 st.sidebar.markdown("---")
@@ -185,6 +189,9 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
+    # Spacer to clear Github/Streamlit Header
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+    
     # Top Right Account Center (Only on Home) - Single Button Style
     c_fill, c_acc = st.columns([3, 1])
     with c_acc:
@@ -383,7 +390,7 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
                 
-                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h', '1d'] else []
+                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h'] else []
                 fig.update_layout(height=500, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks))
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -524,5 +531,3 @@ elif mode == "Media & News":
     with t3:
         for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"):
             st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
-    with t2: render_feed("http://feeds.bbci.co.uk/news/business/rss.xml")
-    with t3: render_feed("http://rss.cnn.com/rss/money_latest.rss")
