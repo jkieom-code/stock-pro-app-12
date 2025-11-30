@@ -185,6 +185,20 @@ if not st.session_state['logged_in']:
     [data-testid="stTextInput"] label {
         color: #888 !important;
     }
+    /* Button Styling for Login Screen */
+    .stButton > button {
+        background-color: #000000 !important;
+        color: #0d6efd !important;
+        border: 2px solid #0d6efd !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        transition: all 0.3s ease !important;
+    }
+    .stButton > button:hover {
+        background-color: #0d6efd !important;
+        color: #000000 !important;
+        box-shadow: 0 0 15px rgba(13, 110, 253, 0.6) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
