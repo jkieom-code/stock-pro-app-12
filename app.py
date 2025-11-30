@@ -543,7 +543,12 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', width=1, dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', width=1, dash='dot'), name='BB Lo'))
                 
-                rangebreaks = [dict(bounds=["sat", "mon"])] if interval in ['1m', '5m', '1h', '1d'] else []
+                # FIX: Only hide weekends for Stocks and Commodities. 
+                # Crypto and Forex trade 24/7 or have Sunday sessions, so we must show weekends.
+                rangebreaks = []
+                if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h', '1d']:
+                    rangebreaks = [dict(bounds=["sat", "mon"])]
+                
                 fig.update_layout(height=600, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks), margin=dict(l=0,r=0,t=0,b=0))
                 st.plotly_chart(fig, use_container_width=True)
 
