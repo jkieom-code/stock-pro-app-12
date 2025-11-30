@@ -29,73 +29,95 @@ st.markdown("""
     }
     
     .stApp {
-        background-color: #f4f6f9; /* Light grey-blue background typical of finance sites */
+        background-color: #ffffff; /* Clean white background */
         color: #333333;
     }
     
-    /* Header Bar Simulation */
-    .header-bar {
-        padding: 10px 20px;
-        background-color: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
-        margin-bottom: 20px;
+    /* Logo Header */
+    .prostock-logo {
+        font-size: 28px;
+        font-weight: 900;
+        color: #0d6efd;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .prostock-logo span {
+        color: #333;
     }
     
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
+        background-color: #f8f9fa;
         border-right: 1px solid #e0e0e0;
     }
     
     /* Metric styling */
     [data-testid="stMetricValue"] {
-        font-size: 24px;
+        font-size: 26px;
         font-weight: 700;
         color: #1a1a1a;
     }
     [data-testid="stMetricLabel"] {
-        font-size: 14px;
+        font-size: 13px;
         color: #666;
-    }
-    
-    /* Card/Box Styling */
-    .finance-card {
-        background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px; /* Sharper corners for pro look */
-        padding: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-    }
-    
-    /* News Feed Items */
-    .news-item {
-        padding: 12px;
-        border-bottom: 1px solid #eee;
-        background-color: white;
-        transition: background-color 0.2s;
-    }
-    .news-item:hover {
-        background-color: #f8f9fa;
-    }
-    .news-source {
-        font-size: 11px;
-        font-weight: 700;
         text-transform: uppercase;
+    }
+    
+    /* Finance Header Card */
+    .finance-header {
+        background-color: #ffffff;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    
+    /* Key Stats Grid */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .stat-item {
+        font-size: 14px;
+    }
+    .stat-label {
         color: #888;
+        font-size: 12px;
+    }
+    .stat-value {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    /* Clean News List Styling */
+    .news-list-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
+    }
+    .news-list-item:hover {
+        background-color: #fcfcfc;
+    }
+    .news-meta {
+        font-size: 11px;
+        color: #999;
         margin-bottom: 4px;
     }
-    .news-title {
+    .news-link {
         font-size: 15px;
         font-weight: 500;
-        color: #0056b3;
+        color: #1a0dab;
         text-decoration: none;
+        line-height: 1.4;
+    }
+    .news-link:hover {
+        text-decoration: underline;
     }
     
-    /* Loading Screen Styling */
+    /* Loading Screen */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -109,20 +131,10 @@ st.markdown("""
         margin-top: 20px;
         animation: pulse 2s infinite;
     }
-    
     @keyframes pulse {
         0% { transform: scale(1); opacity: 0.8; }
         50% { transform: scale(1.05); opacity: 1; }
         100% { transform: scale(1); opacity: 0.8; }
-    }
-    
-    /* Buttons */
-    .stButton>button {
-        border-radius: 4px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 13px;
     }
     
     /* Layout Fixes */
@@ -147,16 +159,15 @@ if 'user_id' not in st.session_state: st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
 
-# --- Loading Screen Logic ---
+# --- Loading Screen ---
 if not st.session_state['splash_shown']:
     placeholder = st.empty()
     with placeholder.container():
         st.markdown("""
         <div class="loading-container">
-            <h1 style='font-size: 60px; color: #1a1a1a; margin-bottom: 0;'>ProStock</h1>
-            <p style='color: #666; font-size: 18px;'>Advanced Market Intelligence</p>
+            <h1 style='font-size: 50px; font-weight:900; color: #0d6efd; margin-bottom: 0;'>Pro<span style="color:#333;">Stock</span></h1>
+            <p style='color: #666; font-size: 16px;'>Institutional Grade Analytics</p>
             <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" class="gemini-logo">
-            <p style='margin-top: 20px; color: #888; font-size: 12px;'>Powered by Gemini AI</p>
         </div>
         """, unsafe_allow_html=True)
     time.sleep(3)
@@ -201,22 +212,22 @@ if not st.session_state['logged_in']:
     with c2:
         st.markdown("""
         <div style='background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; margin-top: 50px;'>
-            <h2 style='color: #333;'>Welcome to ProStock</h2>
-            <p style='color: #777; margin-bottom: 30px;'>Professional Grade Analytics</p>
+            <h2 style='color: #333;'>ProStock Terminal</h2>
+            <p style='color: #777; margin-bottom: 30px;'>Enter 6-Digit ID</p>
         </div>
         """, unsafe_allow_html=True)
         
-        user_input = st.text_input("Enter 6-Digit Access ID", max_chars=6, type="password")
+        user_input = st.text_input("User ID", max_chars=6, type="password", placeholder="######")
         
         b1, b2 = st.columns(2)
         with b1:
             if st.button("Log In", type="primary", use_container_width=True):
                 if len(user_input)==6 and user_input.isdigit(): login_user(user_input)
-                else: st.warning("Invalid ID format.")
+                else: st.warning("Invalid ID.")
         with b2:
             if st.button("Sign Up", use_container_width=True):
                 if len(user_input)==6 and user_input.isdigit(): signup_user(user_input)
-                else: st.warning("Invalid ID format.")
+                else: st.warning("Invalid ID.")
     st.stop()
 
 # ==========================================
@@ -358,7 +369,7 @@ def fetch_rss_feed(url):
     except: return []
 
 # --- Sidebar ---
-st.sidebar.markdown(f"### 👤 Account: {st.session_state['user_id']}")
+st.sidebar.markdown(f"### 👤 User: {st.session_state['user_id']}")
 with st.sidebar.expander("⚙️ Account Center"):
     st.write(f"**ID:** {st.session_state['user_id']}")
     if st.button("Delete Account", type="primary"):
@@ -375,7 +386,7 @@ if mode == "⭐ Favorites":
     st.title("⭐ My Watchlist")
     user_favs = db[st.session_state['user_id']]['favorites']
     if not user_favs:
-        st.info("No favorites yet. Add assets from the Terminal.")
+        st.info("No favorites yet.")
     else:
         fav_data = []
         for sym in user_favs:
@@ -388,6 +399,9 @@ if mode == "⭐ Favorites":
 
 # --- TERMINAL ---
 elif mode == "Asset Terminal":
+    # Logo
+    st.markdown('<div class="prostock-logo">Pro<span>Stock</span></div>', unsafe_allow_html=True)
+
     # --- Asset Selector ---
     market_type = st.sidebar.selectbox("Market Type", ["Stocks", "Commodities", "Currencies/Forex"])
     ticker = ""
@@ -447,7 +461,14 @@ elif mode == "Asset Terminal":
             if isinstance(data.columns, pd.MultiIndex): data.columns = data.columns.get_level_values(0)
             data = calculate_technicals(data)
             
-            curr_p = data['Close'].iloc[-1]
+            # Latest Values
+            latest = data.iloc[-1]
+            curr_p = latest['Close']
+            open_p = latest['Open']
+            high_p = latest['High']
+            low_p = latest['Low']
+            vol = latest.get('Volume', 0)
+            
             prev_p = data['Close'].iloc[-2] if len(data)>1 else curr_p
             delta = curr_p - prev_p
             pct = (delta/prev_p)*100 if prev_p else 0
@@ -458,11 +479,11 @@ elif mode == "Asset Terminal":
 
             # Professional Header
             st.markdown(f"""
-            <div class="finance-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="finance-header">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                     <div>
                         <h1 style="margin:0; font-size:32px;">{ticker}</h1>
-                        <p style="margin:0; color:#666;">{info.get('shortName', ticker)}</p>
+                        <p style="margin:0; color:#666; font-size:14px;">{info.get('shortName', ticker)} • {market_type}</p>
                     </div>
                     <div style="text-align:right;">
                         <h1 style="margin:0; font-size:36px; color:{'#00C853' if delta>=0 else '#D50000'};">
@@ -472,6 +493,13 @@ elif mode == "Asset Terminal":
                             {delta:+.2f} ({pct:+.2f}%) <span style="color:#888; font-weight:normal;">{price_sub}</span>
                         </p>
                     </div>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-item"><div class="stat-label">OPEN</div><div class="stat-value">{open_p:,.2f}</div></div>
+                    <div class="stat-item"><div class="stat-label">HIGH</div><div class="stat-value">{high_p:,.2f}</div></div>
+                    <div class="stat-item"><div class="stat-label">LOW</div><div class="stat-value">{low_p:,.2f}</div></div>
+                    <div class="stat-item"><div class="stat-label">PREV CLOSE</div><div class="stat-value">{prev_p:,.2f}</div></div>
+                    <div class="stat-item"><div class="stat-label">VOLUME</div><div class="stat-value">{vol:,.0f}</div></div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -497,7 +525,7 @@ elif mode == "Asset Terminal":
                 c1, c2 = st.columns([1,2])
                 with c1:
                     fig_g = go.Figure(go.Indicator(mode="gauge+number", value=fg_score, title={'text': f"Market Sentiment"}, gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#333"}, 'steps': [{'range': [0, 40], 'color': "#FF5252"}, {'range': [60, 100], 'color': "#00E676"}]}))
-                    fig_g.update_layout(height=200, margin=dict(l=10,r=10,t=30,b=10))
+                    fig_g.update_layout(height=300, margin=dict(l=20,r=20,t=50,b=20)) # Increased height/margin
                     st.plotly_chart(fig_g, use_container_width=True)
                 with c2:
                     st.markdown("#### AI Forecast")
@@ -511,39 +539,62 @@ elif mode == "Asset Terminal":
                         fig_p = go.Figure()
                         fig_p.add_trace(go.Scatter(x=df_ml['i'][-50:], y=df_ml['Close'][-50:], name='History'))
                         fig_p.add_trace(go.Scatter(x=fut_x.flatten(), y=pred, name='Forecast', line=dict(dash='dash', color='red')))
-                        fig_p.update_layout(height=200, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white")
+                        fig_p.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=0), template="plotly_white")
                         st.plotly_chart(fig_p, use_container_width=True)
                         st.caption(f"Projected Trend: **{curr_code} {pred[-1]:.2f}**")
                     else: st.warning("Insufficient data for forecast")
 
                 report = generate_ai_report(ticker, curr_p, data['SMA'].iloc[-1], data['RSI'].iloc[-1], fg_score, fg_label, news_lbl)
-                st.markdown(f"""<div class="finance-card" style="border-left: 4px solid #0056b3; background:#f8f9fa;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div style="background:#f8f9fa; padding:20px; border-radius:5px; border-left:4px solid #0d6efd;">{report.replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
 
             with tabs[2]:
                 if news:
-                    for i in news[:8]:
+                    for i in news[:10]:
                         t = safe_extract_news_title(i) or "News"
                         l = i.get('link') or i.get('url') or "#"
                         pub = i.get('publisher', 'Source')
-                        st.markdown(f"""<div class="news-item"><div class="news-source">{pub}</div><a href="{l}" target="_blank" class="news-title">{t}</a></div>""", unsafe_allow_html=True)
+                        ts = i.get('providerPublishTime', 0)
+                        time_str = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M') if ts else "Recent"
+                        st.markdown(f"""
+                        <div class="news-list-item">
+                            <div class="news-meta">{pub} • {time_str}</div>
+                            <a href="{l}" target="_blank" class="news-link">{t}</a>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else: st.info("No news.")
 
             with tabs[3]: st.dataframe(data.tail(50), use_container_width=True)
+            
             if market_type == "Stocks":
-                with tabs[4]: st.write(info.get('longBusinessSummary', 'N/A'))
+                with tabs[4]:
+                    st.subheader("Company Profile")
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.write(f"**Sector:** {info.get('sector', 'N/A')}")
+                        st.write(f"**Industry:** {info.get('industry', 'N/A')}")
+                        st.write(f"**Country:** {info.get('country', 'N/A')}")
+                        st.write(f"**Employees:** {info.get('fullTimeEmployees', 'N/A')}")
+                    with c2:
+                        st.write(f"**Website:** {info.get('website', 'N/A')}")
+                        st.write(f"**City:** {info.get('city', 'N/A')}")
+                        st.write(f"**Phone:** {info.get('phone', 'N/A')}")
+                    st.markdown("---")
+                    st.write("**Business Summary:**")
+                    st.write(info.get('longBusinessSummary', 'N/A'))
 
 # --- MEDIA MODE ---
 elif mode == "Media & News":
     st.title("📺 Global Media Center")
+    st.subheader("Quick Access")
     
-    st.markdown("### Quick Access")
-    qc1, qc2, qc3 = st.columns(3)
-    with qc1:
-        st.markdown("""<a href="https://www.investing.com" target="_blank"><img src="https://i-invdn-com.investing.com/logos/investing-com-logo.png" width="150" style="border:1px solid #ddd; padding:10px; border-radius:5px;"></a>""", unsafe_allow_html=True)
-    with qc2:
-        st.markdown("""<a href="https://finance.yahoo.com" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Yahoo_Finance_logo_2021.png" width="150" style="border:1px solid #ddd; padding:10px; border-radius:5px;"></a>""", unsafe_allow_html=True)
-    with qc3:
-        st.markdown("""<a href="https://www.google.com/finance" target="_blank"><img src="https://fonts.gstatic.com/s/i/productlogos/finance/v6/web-64dp/logo_finance_color_2x_web_64dp.png" width="120" style="border:1px solid #ddd; padding:10px; border-radius:5px;"></a>""", unsafe_allow_html=True)
+    # Text-Based Buttons for Quick Access (More Reliable than Images)
+    qa1, qa2, qa3 = st.columns(3)
+    with qa1:
+        st.link_button("🌐 Investing.com", "https://www.investing.com", use_container_width=True)
+    with qa2:
+        st.link_button("📈 Yahoo Finance", "https://finance.yahoo.com", use_container_width=True)
+    with qa3:
+        st.link_button("🔎 Google Finance", "https://www.google.com/finance", use_container_width=True)
 
     st.markdown("---")
     
@@ -562,7 +613,6 @@ elif mode == "Media & News":
     st.markdown("---")
     st.subheader("Live Wires")
     
-    # Simple RSS Fetch
     def get_feed(url):
         try:
             r = requests.get(url, timeout=3)
@@ -573,10 +623,10 @@ elif mode == "Media & News":
     t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
     with t1:
         for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"):
-            st.markdown(f"<div class='news-item'><a href='{n['l']}' target='_blank' class='news-title'>{n['t']}</a></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t2:
         for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"):
-            st.markdown(f"<div class='news-item'><a href='{n['l']}' target='_blank' class='news-title'>{n['t']}</a></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t3:
         for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"):
-            st.markdown(f"<div class='news-item'><a href='{n['l']}' target='_blank' class='news-title'>{n['t']}</a></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
