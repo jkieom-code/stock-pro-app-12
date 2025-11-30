@@ -144,7 +144,7 @@ def get_live_price(ticker):
 
 # --- NAVIGATION ---
 # Sidebar Logo acts as "Home" button
-if st.sidebar.button("🏠 Home / ProStock", type="secondary", use_container_width=True):
+if st.sidebar.button("📈 ProStock", type="primary", use_container_width=True):
     st.session_state['mode'] = "Home"
 
 st.sidebar.markdown("---")
@@ -185,19 +185,12 @@ with st.sidebar.expander("🧮 Currency Calc", expanded=False):
 
 # --- MODE: HOMEPAGE ---
 if mode == "Home":
-    # Top Right Account Center (Only on Home)
+    # Top Right Account Center (Only on Home) - Single Button Style
     c_fill, c_acc = st.columns([3, 1])
     with c_acc:
-        st.markdown(f"""
-        <div class="account-bar">
-            <span class="user-badge">ID: {st.session_state['user_id']}</span>
-        </div>
-        """, unsafe_allow_html=True)
-        c_del, c_out = st.columns(2)
-        with c_del:
-            if st.button("Delete Acc"): delete_account()
-        with c_out:
-            if st.button("Log Out"): logout_user()
+        with st.expander(f"👤 ID: {st.session_state['user_id']}"):
+            if st.button("Log Out", use_container_width=True): logout_user()
+            if st.button("Delete Account", type="primary", use_container_width=True): delete_account()
 
     # Hero Section
     st.markdown("""<div class="hero-container"><div class="homepage-logo">Pro<span>Stock</span></div><p style="font-size:18px; color:#666;">Market Intelligence for the Modern Investor</p></div>""", unsafe_allow_html=True)
@@ -390,7 +383,7 @@ elif mode == "Asset Terminal":
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'], line=dict(color='#999', dash='dot'), name='BB Up'))
                     fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'], line=dict(color='#999', dash='dot'), name='BB Lo'))
                 
-                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h'] else []
+                rangebreaks = [dict(bounds=["sat", "mon"])] if market_type in ["Stocks", "Commodities"] and interval in ['1m', '5m', '1h', '1d'] else []
                 fig.update_layout(height=500, template="plotly_white", xaxis_rangeslider_visible=False, xaxis=dict(rangebreaks=rangebreaks))
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -486,25 +479,50 @@ elif mode == "Favorites":
 # --- MODE: MEDIA ---
 elif mode == "Media & News":
     st.title("📺 Media Center")
-    c1,c2=st.columns(2)
-    with c1: 
-        st.subheader("Bloomberg"); st.video("https://www.youtube.com/watch?v=iEpJwprxDdk")
-        st.subheader("Sky News"); st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
-    with c2: 
-        st.subheader("CNA"); st.video("https://www.youtube.com/watch?v=XWq5kBlakcQ")
-        st.subheader("ABC"); st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
+    st.subheader("Quick Access")
+    
+    # Text-Based Buttons for Quick Access (More Reliable than Images)
+    qa1, qa2, qa3 = st.columns(3)
+    with qa1:
+        st.link_button("🌐 Investing.com", "https://www.investing.com", use_container_width=True)
+    with qa2:
+        st.link_button("📈 Yahoo Finance", "https://finance.yahoo.com", use_container_width=True)
+    with qa3:
+        st.link_button("🔎 Google Finance", "https://www.google.com/finance", use_container_width=True)
+
+    st.markdown("---")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("Bloomberg TV")
+        st.video("https://www.youtube.com/watch?v=iEpJwprxDdk")
+        st.subheader("Sky News")
+        st.video("https://www.youtube.com/watch?v=YDvsBbKfLPA")
+    with c2:
+        st.subheader("CNA Asia")
+        st.video("https://www.youtube.com/watch?v=XWq5kBlakcQ")
+        st.subheader("ABC Australia")
+        st.video("https://www.youtube.com/watch?v=iipR5yUp36o")
     
     st.markdown("---")
-    t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
+    st.subheader("Live Wires")
     
-    def render_feed(url):
+    def get_feed(url):
         try:
-            r = requests.get(url, timeout=3); root = ET.fromstring(r.content)
-            for i in root.findall('.//item')[:5]:
-                t = i.find('title').text; l = i.find('link').text
-                st.markdown(f"<div class='news-list-item'><a href='{l}' target='_blank' class='news-link'>{t}</a></div>", unsafe_allow_html=True)
-        except: st.warning("Feed unavailable")
+            r = requests.get(url, timeout=3)
+            root = ET.fromstring(r.content)
+            return [{'t':i.find('title').text, 'l':i.find('link').text} for i in root.findall('.//item')[:5]]
+        except: return []
 
-    with t1: render_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664")
+    t1, t2, t3 = st.tabs(["CNBC", "BBC", "CNN"])
+    with t1:
+        for n in get_feed("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664"):
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+    with t2:
+        for n in get_feed("http://feeds.bbci.co.uk/news/business/rss.xml"):
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
+    with t3:
+        for n in get_feed("http://rss.cnn.com/rss/money_latest.rss"):
+            st.markdown(f"<div class='news-list-item'><a href='{n['l']}' target='_blank' class='news-link'>{n['t']}</a></div>", unsafe_allow_html=True)
     with t2: render_feed("http://feeds.bbci.co.uk/news/business/rss.xml")
     with t3: render_feed("http://rss.cnn.com/rss/money_latest.rss")
