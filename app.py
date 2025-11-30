@@ -84,9 +84,9 @@ db = get_database()
 if 'user_id' not in st.session_state: st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if 'splash_shown' not in st.session_state: st.session_state['splash_shown'] = False
-if 'mode' not in st.session_state: st.session_state['mode'] = "Home" # Default to Home
+if 'mode' not in st.session_state: st.session_state['mode'] = "Home" 
 if 'ticker_search' not in st.session_state: st.session_state['ticker_search'] = ""
-if 'lang' not in st.session_state: st.session_state['lang'] = "English" # Default Language
+if 'lang' not in st.session_state: st.session_state['lang'] = "English"
 
 # --- TRANSLATION DICTIONARY ---
 TRANS = {
@@ -153,66 +153,12 @@ if not st.session_state['logged_in']:
                 if len(uid)==6 and uid.isdigit(): signup_user(uid)
     st.stop()
 
-# --- Common Data Functions & EXPANDED ASSET MAP ---
+# --- Common Data Functions & ASSET MAP ---
 ASSET_MAP = {
-    # Crypto
-    "BITCOIN": "BTC-USD", "BTC": "BTC-USD",
-    "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
-    "DOGECOIN": "DOGE-USD", "DOGE": "DOGE-USD",
-    "SOLANA": "SOL-USD", "SOL": "SOL-USD",
-    "XRP": "XRP-USD", "RIPPLE": "XRP-USD",
-    "CARDANO": "ADA-USD", "ADA": "ADA-USD",
-    "SHIBA INU": "SHIB-USD", "SHIB": "SHIB-USD",
-    
-    # Commodities
-    "GOLD": "GC=F", "GC": "GC=F",
-    "SILVER": "SI=F", "SI": "SI=F",
-    "CRUDE OIL": "CL=F", "OIL": "CL=F", "WTI": "CL=F",
-    "BRENT": "BZ=F",
-    "NATURAL GAS": "NG=F", "GAS": "NG=F",
-    "COPPER": "HG=F",
-    "CORN": "ZC=F",
-    "SOYBEANS": "ZS=F",
-    
-    # Currencies / Forex
-    "USD/KRW": "KRW=X", "WON": "KRW=X", "KOREAN WON": "KRW=X", "KRW": "KRW=X",
-    "EUR/USD": "EURUSD=X", "EURO": "EURUSD=X",
-    "JPY/USD": "JPY=X", "YEN": "JPY=X",
-    "GBP/USD": "GBPUSD=X", "POUND": "GBPUSD=X",
-    "CAD/USD": "CAD=X",
-    
-    # Major Stocks (US & Korea)
-    "APPLE": "AAPL", "AAPL": "AAPL",
-    "MICROSOFT": "MSFT", "MSFT": "MSFT",
-    "NVIDIA": "NVDA", "NVDA": "NVDA",
-    "GOOGLE": "GOOGL", "ALPHABET": "GOOGL", "GOOG": "GOOG", "GOOGL": "GOOGL",
-    "AMAZON": "AMZN", "AMZN": "AMZN",
-    "TESLA": "TSLA", "TSLA": "TSLA",
-    "META": "META", "FACEBOOK": "META",
-    "NETFLIX": "NFLX", "NFLX": "NFLX",
-    "SAMSUNG": "005930.KS", "SAMSUNG ELECTRONICS": "005930.KS",
-    "SK HYNIX": "000660.KS",
-    "TSMC": "TSM",
-    "AMD": "AMD",
-    "INTEL": "INTC",
-    "COINBASE": "COIN",
-    "GAMESTOP": "GME",
-    "AMC": "AMC",
-    "DISNEY": "DIS",
-    "COCA COLA": "KO",
-    "PEPSI": "PEP",
-    "MCDONALDS": "MCD",
-    "STARBUCKS": "SBUX",
-    "NIKE": "NKE",
-    "WALMART": "WMT",
-    "COSTCO": "COST",
-    "JP MORGAN": "JPM",
-    "VISA": "V",
-    "MASTERCARD": "MA",
-    "PAYPAL": "PYPL",
-    "S&P 500": "^GSPC", "SPX": "^GSPC",
-    "NASDAQ": "^IXIC",
-    "DOW JONES": "^DJI"
+    "BITCOIN": "BTC-USD", "BTC": "BTC-USD", "ETHEREUM": "ETH-USD", "ETH": "ETH-USD",
+    "SOLANA": "SOL-USD", "XRP": "XRP-USD", "GOLD": "GC=F", "SILVER": "SI=F",
+    "OIL": "CL=F", "USD/KRW": "KRW=X", "APPLE": "AAPL", "TESLA": "TSLA",
+    "NVIDIA": "NVDA", "GOOGLE": "GOOGL", "AMAZON": "AMZN", "SAMSUNG": "005930.KS", "DISNEY": "DIS"
 }
 
 @st.cache_data(ttl=60)
@@ -226,6 +172,107 @@ def get_live_price(ticker):
             return price, change
     except: pass
     return 0.0, 0.0
+
+# --- RESTORED HELPER FUNCTIONS ---
+@st.cache_data(ttl=60)
+def get_stock_data(ticker, interval, period, start=None, end=None):
+    try:
+        if interval == "1d" and start and end:
+            data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
+        else:
+            data = yf.download(ticker, period=period, interval=interval, progress=False)
+        if (data.empty or len(data)<2) and period=="1d":
+            data = yf.download(ticker, period="5d", interval=interval, progress=False)
+        if 'Volume' in data.columns: data = data[data['Volume']>0]
+        data = data.dropna()
+        return data
+    except: return pd.DataFrame()
+
+@st.cache_data(ttl=300)
+def get_stock_info(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        return stock.info, stock.news
+    except: return {}, []
+
+@st.cache_data(ttl=300)
+def get_exchange_rate(pair="KRW=X"):
+    try:
+        data = yf.Ticker(pair).history(period="1d")
+        if not data.empty: return data['Close'].iloc[-1]
+    except: return None
+    return None
+
+def calculate_technicals(data):
+    if len(data) < 2: return data
+    delta = data['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    data['RSI'] = 100 - (100 / (1 + rs))
+    data['SMA'] = data['Close'].rolling(window=20).mean()
+    data['EMA'] = data['Close'].ewm(span=50, adjust=False).mean()
+    data['BB_Middle'] = data['Close'].rolling(window=20).mean()
+    std = data['Close'].rolling(window=20).std()
+    data['BB_Upper'] = data['BB_Middle'] + 2 * std
+    data['BB_Lower'] = data['BB_Middle'] - 2 * std
+    return data
+
+def get_fear_and_greed_proxy():
+    try:
+        vix = yf.Ticker("^VIX").history(period="5d")['Close'].iloc[-1]
+        sp500 = yf.Ticker("^GSPC").history(period="6mo")
+        if sp500.empty: return 50, "Neutral"
+        current_sp = sp500['Close'].iloc[-1]
+        avg_sp = sp500['Close'].mean()
+        fear_score = max(0, min(100, 100 - (vix - 10) * 2.5))
+        momentum_score = max(0, min(100, 50 + ((current_sp - avg_sp) / avg_sp) * 500))
+        final_score = (fear_score * 0.4) + (momentum_score * 0.6)
+        if final_score < 25: label = "Extreme Fear"; 
+        elif final_score < 45: label = "Fear"
+        elif final_score < 55: label = "Neutral"
+        elif final_score < 75: label = "Greed"
+        else: label = "Extreme Greed"
+        return int(final_score), label
+    except: return 50, "Neutral"
+
+def safe_extract_news_title(item):
+    if not isinstance(item, dict): return None
+    if 'title' in item and item['title']: return item['title']
+    if 'content' in item and isinstance(item['content'], dict):
+        if 'title' in item['content'] and item['content']['title']: return item['content']['title']
+    for key, value in item.items():
+        if isinstance(value, dict):
+            res = safe_extract_news_title(value)
+            if res: return res
+    return None
+
+def analyze_news_sentiment(news_items):
+    if not news_items: return 0, 0, 0, "Neutral"
+    polarities = []
+    for item in news_items:
+        title = safe_extract_news_title(item)
+        if title:
+            blob = TextBlob(title)
+            polarities.append(blob.sentiment.polarity)
+    if not polarities: return 0, 0, 0, "Neutral"
+    pos = sum(1 for p in polarities if p > 0.05)
+    neg = sum(1 for p in polarities if p < -0.05)
+    neu = len(polarities) - pos - neg
+    avg_pol = np.mean(polarities)
+    if avg_pol > 0.05: label = "Positive"
+    elif avg_pol < -0.05: label = "Negative"
+    else: label = "Neutral"
+    return pos, neg, neu, label
+
+def generate_ai_report(ticker, price, sma, rsi, fg_score, fg_label, news_label):
+    report = f"### 🧠 AI Executive Summary for {ticker}\n\n"
+    report += f"**1. Market Sentiment:** {fg_label} ({fg_score}/100).\n"
+    report += f"**2. News Analysis:** {news_label} sentiment detected.\n"
+    trend = "Bullish 🟢" if price > sma else "Bearish 🔴"
+    rsi_state = "Overbought ⚠️" if rsi > 70 else "Oversold 🛒" if rsi < 30 else "Neutral ⚖️"
+    report += f"**3. Technicals:** {trend} trend, RSI is {rsi_state}."
+    return report
 
 # --- NAVIGATION ---
 st.sidebar.markdown('<div class="prostock-logo-sidebar">Pro<span>Stock</span></div>', unsafe_allow_html=True)
@@ -282,7 +329,6 @@ if mode == "Home":
         big_search = st.text_input("🔍 " + txt("Search"), placeholder=txt("Search_Ph"), label_visibility="collapsed")
         if big_search:
             q_upper = big_search.upper().strip()
-            # Check for name/key in map, else treat as ticker
             ticker_res = ASSET_MAP.get(q_upper, q_upper) 
             st.session_state['ticker_search'] = ticker_res
             st.session_state['mode'] = "Asset Terminal"
@@ -483,9 +529,12 @@ elif mode == "Asset Terminal":
                         st.write(f"**Sector:** {info.get('sector', 'N/A')}")
                         st.write(f"**Industry:** {info.get('industry', 'N/A')}")
                         st.write(f"**Country:** {info.get('country', 'N/A')}")
+                        st.write(f"**Employees:** {info.get('fullTimeEmployees', 'N/A')}")
                     with c2:
                         st.write(f"**Website:** {info.get('website', 'N/A')}")
-                        st.write(f"**Employees:** {info.get('fullTimeEmployees', 'N/A')}")
+                        st.write(f"**City:** {info.get('city', 'N/A')}")
+                        st.write(f"**Phone:** {info.get('phone', 'N/A')}")
+                    st.markdown("---")
                     st.write("**Business Summary:**")
                     st.write(info.get('longBusinessSummary', 'N/A'))
 
