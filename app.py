@@ -137,11 +137,66 @@ def logout_user():
 def delete_account():
     if st.session_state['user_id'] in db: del db[st.session_state['user_id']]; logout_user()
 
+# --- LOGIN SCREEN ---
 if not st.session_state['logged_in']:
+    # Inject Signature Black & Blue CSS for Login Only
+    st.markdown("""
+    <style>
+    .stApp {
+        background-color: #000000 !important;
+    }
+    [data-testid="stHeader"] {
+        background-color: #000000 !important;
+    }
+    .login-box {
+        background-color: #111111;
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid #222;
+        border-top: 3px solid #0d6efd;
+        box-shadow: 0 0 30px rgba(13, 110, 253, 0.15);
+        text-align: center;
+        margin-top: 50px;
+    }
+    .login-title {
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 900;
+        font-size: 36px;
+        margin-bottom: 5px;
+    }
+    .login-subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    /* Input Fields Overrides */
+    [data-testid="stTextInput"] input {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 1px solid #333 !important;
+    }
+    [data-testid="stTextInput"] input:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 1px #0d6efd !important;
+    }
+    [data-testid="stTextInput"] label {
+        color: #888 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     c1,c2,c3 = st.columns([1,1.5,1])
     with c2:
-        st.markdown("""<div style='background:white;padding:40px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.08);text-align:center;margin-top:50px;'><h2 style='color:#333;'>ProStock Terminal</h2><p style='color:#777;margin-bottom:30px;'>Enter 6-Digit ID</p></div>""", unsafe_allow_html=True)
-        uid = st.text_input("User ID", max_chars=6, type="password", placeholder="######")
+        st.markdown("""
+        <div class="login-box">
+            <div class="login-title">Pro<span style="color:#0d6efd;">Stock</span></div>
+            <p class="login-subtitle">Professional Personal Banking</p>
+        </div>
+        """, unsafe_allow_html=True)
+        uid = st.text_input("User ID", max_chars=6, type="password", placeholder="Access Code (6 Digits)")
         b1,b2=st.columns(2)
         with b1: 
             if st.button("Log In", type="primary", use_container_width=True): 
@@ -244,22 +299,14 @@ def get_fear_and_greed_proxy():
     except: return 50, "Neutral"
 
 def safe_extract_news_title(item):
-    """Recursively search for a title in a messy dictionary."""
-    if not isinstance(item, dict):
-        return None
-    
-    if 'title' in item and item['title']:
-        return item['title']
-    
+    if not isinstance(item, dict): return None
+    if 'title' in item and item['title']: return item['title']
     if 'content' in item and isinstance(item['content'], dict):
-        if 'title' in item['content'] and item['content']['title']:
-            return item['content']['title']
-            
+        if 'title' in item['content'] and item['content']['title']: return item['content']['title']
     for key, value in item.items():
         if isinstance(value, dict):
             res = safe_extract_news_title(value)
             if res: return res
-            
     return None
 
 def analyze_news_sentiment(news_items):
